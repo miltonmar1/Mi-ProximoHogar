@@ -5,40 +5,56 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+_ON_AZURE = bool(os.environ.get("WEBSITE_SITE_NAME", "").strip())
+_DB_SERVER_ENV = os.environ.get("DB_SERVER", "")
+_IS_AZURE_SQL = "database.windows.net" in _DB_SERVER_ENV
 
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-me-in-production")
 
-    # mssql = SQL Server local / Azure SQL | mysql = Hostinger
+    # mssql = SQL Server local / Azure SQL | mysql = Hostinger / Azure MySQL
     DB_ENGINE = os.environ.get("DB_ENGINE", "mssql").strip().lower()
 
     # SQL Server (local o Azure SQL Database)
-    DB_DRIVER = os.environ.get("DB_DRIVER", "ODBC Driver 17 for SQL Server")
+    DB_DRIVER = os.environ.get(
+        "DB_DRIVER",
+        "ODBC Driver 18 for SQL Server" if _IS_AZURE_SQL else "ODBC Driver 17 for SQL Server",
+    )
     DB_SERVER = os.environ.get("DB_SERVER", "localhost\\SQLEXPRESS")
     DB_NAME = os.environ.get("DB_NAME", "MiProximoHogar")
-    DB_TRUSTED = os.environ.get("DB_TRUSTED_CONNECTION", "yes").lower() == "yes"
+    DB_TRUSTED = os.environ.get(
+        "DB_TRUSTED_CONNECTION",
+        "no" if (_ON_AZURE or _IS_AZURE_SQL) else "yes",
+    ).lower() == "yes"
     DB_USER = os.environ.get("DB_USER", "")
     DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
-    # Azure SQL: Encrypt=yes obligatorio; en local puede ser no
-    DB_ENCRYPT = os.environ.get("DB_ENCRYPT", "no").lower() in ("1", "true", "yes")
+    DB_ENCRYPT = os.environ.get(
+        "DB_ENCRYPT",
+        "yes" if (_IS_AZURE_SQL or _ON_AZURE) else "no",
+    ).lower() in ("1", "true", "yes")
     DB_TRUST_SERVER_CERTIFICATE = os.environ.get(
         "DB_TRUST_SERVER_CERTIFICATE", "no"
     ).lower() in ("1", "true", "yes")
-    # Si es Azure SQL, no intentar CREATE DATABASE al arrancar
-    DB_AZURE = os.environ.get("DB_AZURE", "no").lower() in ("1", "true", "yes")
+    DB_AZURE = os.environ.get(
+        "DB_AZURE",
+        "yes" if _IS_AZURE_SQL else "no",
+    ).lower() in ("1", "true", "yes")
 
-    # MySQL (Hostinger)
-    MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
-    MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
+    # MySQL (Hostinger / Azure Database for MySQL)    MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
     MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", os.environ.get("DB_NAME", "miproximohogar"))
     MYSQL_USER = os.environ.get("MYSQL_USER", "")
     MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
     MYSQL_SSL = os.environ.get("MYSQL_SSL", "no").lower() in ("1", "true", "yes")
 
-    FLASK_ENV = os.environ.get("FLASK_ENV", "development")
-    FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "1").lower() in ("1", "true", "yes")
-
+    FLASK_ENV = os.environ.get(
+        "FLASK_ENV",
+        "production" if _ON_AZURE else "development",
+    )
+    FLASK_DEBUG = os.environ.get(
+        "FLASK_DEBUG",
+        "0" if _ON_AZURE else "1",
+    ).lower() in ("1", "true", "yes")
     UPLOAD_FOLDER = os.path.join(BASE_DIR, os.environ.get("UPLOAD_FOLDER", "static/uploads"))
     MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 32 * 1024 * 1024))
     WTF_CSRF_TIME_LIMIT = None
@@ -57,8 +73,12 @@ class Config:
     MAP_CENTER_LNG = -71.9675
     MAP_ZOOM = 13
 
-    SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:5000").rstrip("/")
-
+    _default_site = (
+        f"https://{os.environ['WEBSITE_HOSTNAME']}"
+        if _ON_AZURE and os.environ.get("WEBSITE_HOSTNAME")
+        else "http://127.0.0.1:5000"
+    )
+    SITE_URL = os.environ.get("SITE_URL", _default_site).rstrip("/")
     MAIL_SERVER = os.environ.get("MAIL_SERVER", "").strip()
     MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"

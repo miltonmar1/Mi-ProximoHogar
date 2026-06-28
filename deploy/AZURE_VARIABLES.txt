@@ -1,0 +1,29 @@
+# =============================================================================
+# PEGAR EN AZURE > Mi-ProximoHogar > Configuracion > Variables de entorno
+# Una fila por variable. Cambia SERVER, USER y PASSWORD por los tuyos.
+# =============================================================================
+
+SECRET_KEY=MphAzure2026SecretKeyLargaCambiar!
+FLASK_ENV=production
+FLASK_DEBUG=0
+SITE_URL=https://mi-proximohogar-e4ebhqgvfme0d0bj.centralus-01.azurewebsites.net
+
+DB_ENGINE=mssql
+DB_DRIVER=ODBC Driver 18 for SQL Server
+DB_SERVER=TU-SERVIDOR.database.windows.net,1433
+DB_NAME=MiProximoHogar
+DB_TRUSTED_CONNECTION=no
+DB_USER=sqladmin
+DB_PASSWORD=TU_PASSWORD_SQL
+DB_ENCRYPT=yes
+DB_TRUST_SERVER_CERTIFICATE=no
+DB_AZURE=yes
+
+LEGAL_EMAIL=contacto@miproximohogar.pe
+LEGAL_ENTITY_NAME=Mi Proximo Hogar
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
+# Comando de inicio (Configuracion general, NO en rutas de certificado):
+# bash startup.sh
+
+# Certificado de cliente entrantes = Omitir (NO Obligatorio)

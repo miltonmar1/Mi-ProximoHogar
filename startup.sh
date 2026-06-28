@@ -29,9 +29,9 @@ if [ -f requirements.txt ]; then
 fi
 
 PORT="${PORT:-8000}"
-WEBSITES_PORT="${WEBSITES_PORT:-$PORT}"
+WEBSITES_PORT="${WEBSITES_PORT:-${PORT}}"
 
-exec gunicorn \
+echo "Starting gunicorn on port ${WEBSITES_PORT}..."
   --chdir /home/site/wwwroot \
   --bind "0.0.0.0:${WEBSITES_PORT}" \
   --timeout 600 \

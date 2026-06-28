@@ -20,14 +20,17 @@ from extensions import oauth
 def _register_google_oauth(app: Flask) -> None:
     if not app.config.get("GOOGLE_CLIENT_ID") or not app.config.get("GOOGLE_CLIENT_SECRET"):
         return
-    oauth.init_app(app)
-    oauth.register(
-        name="google",
-        client_id=app.config["GOOGLE_CLIENT_ID"],
-        client_secret=app.config["GOOGLE_CLIENT_SECRET"],
-        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-        client_kwargs={"scope": "openid email profile"},
-    )
+    try:
+        oauth.init_app(app)
+        oauth.register(
+            name="google",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
+        )
+    except Exception as exc:
+        app.logger.warning("Google OAuth no disponible: %s", exc)
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -51,6 +54,9 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         try:
             return models.Usuario.por_id(int(user_id))
         except (TypeError, ValueError):
+            return None
+        except Exception as exc:
+            app.logger.warning("No se pudo cargar usuario %s: %s", user_id, exc)
             return None
 
     from routes.main import bp as main_bp
@@ -93,6 +99,23 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             status["detail"] = str(exc)[:200]
             return jsonify(status), 503
         return jsonify(status)
+
+    @app.errorhandler(500)
+    def internal_error(err):
+        from flask import render_template_string
+
+        app.logger.exception("Error 500: %s", err)
+        return render_template_string(
+            """<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+            <title>Error - Mi Proximo Hogar</title>
+            <style>body{font-family:sans-serif;max-width:520px;margin:4rem auto;padding:1rem}
+            h1{color:#c2410c}a{color:#ea580c}</style></head><body>
+            <h1>Sitio en configuracion</h1>
+            <p>La aplicacion esta activa pero falta conectar la base de datos.</p>
+            <p>Revisa <a href="/health">/health</a> para diagnosticar.</p>
+            </body></html>""",
+            500,
+        )
 
     @app.template_filter("precio")
     def fmt_precio(value, moneda: str = "PEN"):
@@ -142,6 +165,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             return base + path
 
         map_ciudad = app.config.get("MAP_CIUDAD") or "Cusco"
+        try:
+            map_ciudad_id = ciudad_id_por_nombre(map_ciudad)
+        except Exception:
+            map_ciudad_id = None
         return {
             "year": datetime.now().year,
             "marca": "Mi Proximo Hogar",
@@ -149,7 +176,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             "absolute_url": absolute_url,
             "google_maps_key": app.config.get("GOOGLE_MAPS_API_KEY") or "",
             "map_ciudad": map_ciudad,
-            "map_ciudad_id": ciudad_id_por_nombre(map_ciudad),
+            "map_ciudad_id": map_ciudad_id,
             "map_center_lat": app.config.get("MAP_CENTER_LAT", -13.5319),
             "map_center_lng": app.config.get("MAP_CENTER_LNG", -71.9675),
             "map_zoom": app.config.get("MAP_ZOOM", 13),
@@ -166,10 +193,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     return app
 
 
-app = create_app()
-
-
 if __name__ == "__main__":
+    app = create_app()
     port = int(os.environ.get("PORT", "5000"))
     debug = Config.FLASK_DEBUG and not Config.is_production()
     host = "127.0.0.1" if not Config.is_production() else "0.0.0.0"
