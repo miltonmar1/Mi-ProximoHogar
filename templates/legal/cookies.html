@@ -1,0 +1,27 @@
+{% extends "legal/_layout.html" %}
+{% set page_title = "Politica de cookies" %}
+{% block title %}{{ page_title }} - {{ marca }}{% endblock %}
+
+{% block legal_content %}
+<p>Esta pagina explica que son las cookies y tecnologias similares, cuales usamos en {{ marca }} y como puedes gestionarlas.</p>
+
+<h2>1. Que son las cookies</h2>
+<p>Las cookies son pequenos archivos que el navegador guarda en tu dispositivo. Tambien usamos <strong>localStorage</strong> del navegador para recordar preferencias y, si aceptas, estadisticas anonimas de sesion.</p>
+
+<h2>2. Cookies y almacenamiento que utilizamos</h2>
+<ul>
+  <li><strong>Esenciales (siempre activas):</strong> sesion de usuario Flask, proteccion CSRF (token de formularios) y preferencia de consentimiento de cookies (<code>mph_cookies_v1</code> en localStorage).</li>
+  <li><strong>Funcionales:</strong> ultima propiedad visitada (<code>mph_recent_prop_v1</code>) para el banner "Seguir viendo".</li>
+  <li><strong>Analiticas (solo con tu consentimiento):</strong> identificador de sesion anonimo (<code>mph_session_v1</code>) y eventos de visualizacion de lotes en masterplans de terrenos.</li>
+  <li><strong>Terceros:</strong> si cargas mapas de Google Maps o inicias sesion con Google, esas empresas pueden usar sus propias cookies segun sus politicas.</li>
+</ul>
+
+<h2>3. Base legal</h2>
+<p>Las cookies y almacenamiento esenciales se usan por necesidad tecnica. Para analiticas y preferencias no esenciales solicitamos tu consentimiento mediante el banner mostrado en la primera visita.</p>
+
+<h2>4. Como gestionarlas</h2>
+<p>Puedes aceptar o rechazar cookies no esenciales desde el banner del sitio. Tambien puedes borrarlas o bloquearlas desde la configuracion de tu navegador. Ten en cuenta que desactivar cookies esenciales puede afectar el inicio de sesion o formularios.</p>
+
+<h2>5. Mas informacion</h2>
+<p>Para saber como tratamos tus datos personales consulta nuestra <a href="{{ url_for('main.legal_privacidad') }}">politica de privacidad</a>.</p>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Compartir anuncios en mapa - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Compartir seleccion en mapa</h1>
+    <p>Elige los anuncios que quieres mostrar. Quien reciba el enlace vera <strong>solo esos lotes</strong> en el mapa, no el resto del portal.</p>
+  </header>
+
+  <div class="mis-anuncios__toolbar">
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.mis_anuncios') }}">Mis anuncios</a>
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.compartir_enlaces') }}">Mis enlaces compartidos</a>
+  </div>
+
+  {% if enlace_creado %}
+    <div class="share-created card">
+      <h2>Enlace listo</h2>
+      <p>Mapa: <strong>{{ lista_titulo }}</strong></p>
+      <div class="share-created__url">
+        <input type="text" id="shareUrlInput" readonly value="{{ enlace_creado }}" class="share-url-input" />
+        <button type="button" class="btn btn--primary btn--small" id="btnCopiarEnlace">Copiar enlace</button>
+      </div>
+      <p class="share-created__hint">Puedes enviar este enlace por WhatsApp, correo, etc. No requiere iniciar sesion.</p>
+      <a class="btn btn--accent" href="{{ enlace_creado }}" target="_blank" rel="noopener">Abrir mapa compartido</a>
+    </div>
+  {% endif %}
+
+  {% if anuncios %}
+    <form method="post" class="share-form card">
+      <label class="share-form__titulo">
+        Titulo del mapa (opcional)
+        <input type="text" name="titulo" maxlength="200" placeholder="Ej: Lotes disponibles Etapa 1 — Yoger" />
+      </label>
+
+      <div class="share-form__toolbar">
+        <button type="button" class="btn btn--ghost btn--small" id="btnSelTodos">Seleccionar todos</button>
+        <button type="button" class="btn btn--ghost btn--small" id="btnSelNinguno">Quitar seleccion</button>
+      </div>
+
+      <ul class="share-pick-list">
+        {% for a in anuncios %}
+          <li class="share-pick-item">
+            <label>
+              <input type="checkbox" name="propiedad_ids" value="{{ a.PropiedadId }}" class="share-pick-cb" />
+              <span class="share-pick-item__body">
+                <strong>{{ a.Titulo }}</strong>
+                <span>{{ a.TipoNombre }} · {{ a.Ciudad }}{% if a.Distrito %}, {{ a.Distrito }}{% endif %}</span>
+                <span>{{ a.Precio|precio(a.Moneda) }}
+                  {% if a.Estado != 'activo' %}<em class="share-pick-item__off">(deshabilitado — solo visible con enlace)</em>{% endif %}
+                </span>
+              </span>
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <button class="btn btn--primary" type="submit">Generar enlace de mapa</button>
+    </form>
+  {% else %}
+    <div class="empty-state">
+      <p>Publica al menos un anuncio para poder compartirlo en el mapa.</p>
+      <a class="btn btn--primary" href="{{ url_for('propiedades.publicar') }}">Publicar anuncio</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+  (function () {
+    var btnAll = document.getElementById('btnSelTodos');
+    var btnNone = document.getElementById('btnSelNinguno');
+    var cbs = document.querySelectorAll('.share-pick-cb');
+    if (btnAll) btnAll.addEventListener('click', function () {
+      cbs.forEach(function (cb) { cb.checked = true; });
+    });
+    if (btnNone) btnNone.addEventListener('click', function () {
+      cbs.forEach(function (cb) { cb.checked = false; });
+    });
+    var copyBtn = document.getElementById('btnCopiarEnlace');
+    var inp = document.getElementById('shareUrlInput');
+    if (copyBtn && inp) {
+      copyBtn.addEventListener('click', function () {
+        inp.select();
+        inp.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(inp.value).then(function () {
+          copyBtn.textContent = 'Copiado';
+          setTimeout(function () { copyBtn.textContent = 'Copiar enlace'; }, 2000);
+        });
+      });
+    }
+  })();
+</script>
+{% endblock %}

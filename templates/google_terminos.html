@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_errors %}
+
+{% block title %}Completar registro - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth__card auth__card--wide">
+    <h1>Ultimo paso</h1>
+    <p>Hola <strong>{{ nombre }}</strong>, confirma que aceptas nuestros terminos para crear tu cuenta con <strong>{{ email }}</strong>.</p>
+
+    <form method="post" class="form">
+      {{ form.hidden_tag() }}
+      {{ form_errors(form) }}
+      <label class="check check--full">
+        {{ form.acepta_terminos() }}
+        <span>Acepto los <a href="{{ url_for('main.legal_terminos') }}" target="_blank" rel="noopener">terminos y condiciones</a>
+          y la <a href="{{ url_for('main.legal_privacidad') }}" target="_blank" rel="noopener">politica de privacidad</a></span>
+      </label>
+      {{ form.submit(class_="btn btn--primary btn--block") }}
+    </form>
+
+    <div class="auth__alt">
+      <a href="{{ url_for('auth.login') }}">Cancelar y volver al inicio de sesion</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

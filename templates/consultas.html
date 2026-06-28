@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Consultas recibidas - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Consultas recibidas</h1>
+    <p>Mensajes de interesados en tus anuncios. Responde por email o telefono.</p>
+  </header>
+
+  <div class="mis-anuncios__toolbar">
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.mis_anuncios') }}">Mis anuncios</a>
+    <a class="btn btn--ghost" href="{{ url_for('auth.perfil') }}">Volver al perfil</a>
+  </div>
+
+  {% if anuncios %}
+  <form class="consultas-filtro card" method="get" action="{{ url_for('propiedades.consultas') }}">
+    <label>
+      Filtrar por anuncio
+      <select name="propiedad_id" onchange="this.form.submit()">
+        <option value="">Todos los anuncios ({{ total }})</option>
+        {% for a in anuncios %}
+          <option value="{{ a.PropiedadId }}" {% if filtro_pid == a.PropiedadId %}selected{% endif %}>
+            {{ a.Titulo }}{% if a.Estado != 'activo' %} (deshabilitado){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  {% endif %}
+
+  {% if consultas %}
+    <div class="consultas-list">
+      {% for c in consultas %}
+        <article class="consulta card">
+          <header class="consulta__head">
+            <div>
+              <h2>{{ c.Nombre }}</h2>
+              <p class="consulta__meta">
+                <time datetime="{{ c.FechaEnvio }}">{{ c.FechaEnvio|fecha }}</time>
+                &middot;
+                <a href="{{ url_for('main.detalle', pid=c.PropiedadId) }}">{{ c.Titulo }}</a>
+                {% if c.Estado and c.Estado != 'activo' %}
+                  <span class="chip chip--inactivo">Anuncio deshabilitado</span>
+                {% endif %}
+              </p>
+            </div>
+            <div class="consulta__actions">
+              <a class="btn btn--primary btn--small"
+                 href="mailto:{{ c.Email }}?subject={{ ('Consulta: ' ~ c.Titulo)|urlencode }}">Responder</a>
+            </div>
+          </header>
+          <dl class="consulta__contact">
+            <div><dt>Email</dt><dd><a href="mailto:{{ c.Email }}">{{ c.Email }}</a></dd></div>
+            {% if c.Telefono %}
+            <div><dt>Telefono</dt><dd><a href="tel:{{ c.Telefono }}">{{ c.Telefono }}</a></dd></div>
+            {% endif %}
+            <div><dt>Ubicacion</dt><dd>{{ c.Ciudad }}{% if c.Distrito %}, {{ c.Distrito }}{% endif %}</dd></div>
+          </dl>
+          <blockquote class="consulta__mensaje">{{ c.Mensaje }}</blockquote>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Sin consultas{% if filtro_pid %} en este anuncio{% endif %}</h3>
+      <p>Cuando alguien envie un mensaje desde la ficha de tu propiedad, aparecera aqui y tambien te llegara por correo (si el SMTP esta configurado).</p>
+      {% if not anuncios %}
+        <a class="btn btn--primary" href="{{ url_for('propiedades.publicar') }}">Publicar mi primer anuncio</a>
+      {% else %}
+        <a class="btn btn--ghost" href="{{ url_for('propiedades.mis_anuncios') }}">Ver mis anuncios</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

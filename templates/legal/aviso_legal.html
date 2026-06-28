@@ -1,0 +1,31 @@
+{% extends "legal/_layout.html" %}
+{% set page_title = "Aviso legal" %}
+{% block title %}{{ page_title }} - {{ marca }}{% endblock %}
+
+{% block legal_content %}
+<p>En cumplimiento de la normativa peruana de comercio electronico y proteccion al consumidor, se informa a los usuarios del sitio web los datos identificativos del titular.</p>
+
+<h2>1. Datos del titular</h2>
+<p>
+  <strong>{{ legal_entity }}</strong>
+  {% if legal_ruc %}<br>RUC: {{ legal_ruc }}{% endif %}
+  <br>Domicilio social: {{ legal_address }}
+  <br>Email: <a href="mailto:{{ legal_email }}">{{ legal_email }}</a>
+  {% if legal_phone %}<br>Telefono: {{ legal_phone }}{% endif %}
+</p>
+
+<h2>2. Objeto del sitio web</h2>
+<p>El sitio <strong>{{ marca }}</strong> ({{ site_url or absolute_url('/') }}) ofrece un servicio de clasificados inmobiliarios en linea para publicar y buscar propiedades en venta o alquiler en Peru.</p>
+
+<h2>3. Condiciones de uso</h2>
+<p>El acceso y uso del sitio implica la aceptacion de los <a href="{{ url_for('main.legal_terminos') }}">terminos y condiciones</a>, la <a href="{{ url_for('main.legal_privacidad') }}">politica de privacidad</a> y la <a href="{{ url_for('main.legal_cookies') }}">politica de cookies</a>.</p>
+
+<h2>4. Propiedad intelectual</h2>
+<p>Los contenidos del portal (diseno, codigo, marca, textos propios) son propiedad de {{ legal_entity }} o de sus licenciantes. Queda prohibida su reproduccion sin autorizacion.</p>
+
+<h2>5. Responsabilidad</h2>
+<p>{{ legal_entity }} no se responsabiliza del contenido publicado por terceros en los anuncios, ni de las transacciones realizadas entre usuarios.</p>
+
+<h2>6. Legislacion aplicable</h2>
+<p>Este aviso se rige por la legislacion de la Republica del Peru.</p>
+{% endblock %}

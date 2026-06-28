@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card_propiedad %}
+
+{% block title %}Mi perfil - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Hola, {{ current_user.nombre.split(' ')[0] }}</h1>
+    <p>{{ current_user.email }}{% if current_user.es_agente %} &middot; Agente verificado{% endif %}</p>
+    <p><a class="link-more" href="{{ url_for('auth.editar_perfil') }}">Editar perfil &rarr;</a></p>
+  </header>
+
+  <div class="grid-actions">
+    <a class="action-card" href="{{ url_for('propiedades.mis_anuncios') }}">
+      <h3>Mis anuncios</h3>
+      <p>{{ anuncios|length }} publicacion{{ 'es' if anuncios|length != 1 else '' }} — deshabilitar o eliminar.</p>
+    </a>
+    <a class="action-card" href="{{ url_for('propiedades.consultas') }}">
+      <h3>Consultas recibidas</h3>
+      <p>{{ total_consultas }} mensaje{{ 's' if total_consultas != 1 else '' }} de interesados.</p>
+    </a>
+    <a class="action-card" href="{{ url_for('propiedades.publicar') }}">
+      <h3>Publicar anuncio</h3>
+      <p>Crea una nueva publicacion en minutos.</p>
+    </a>
+    <a class="action-card" href="{{ url_for('propiedades.compartir') }}">
+      <h3>Compartir en mapa</h3>
+      <p>Genera un enlace con solo tus anuncios elegidos.</p>
+    </a>
+    <a class="action-card" href="{{ url_for('main.favoritos') }}">
+      <h3>Mis favoritos</h3>
+      <p>{{ favoritos|length }} propiedades guardadas.</p>
+    </a>
+    <a class="action-card" href="{{ url_for('main.propiedades') }}">
+      <h3>Explorar</h3>
+      <p>Mira las propiedades mas recientes.</p>
+    </a>
+  </div>
+
+  {% if anuncios %}
+  <section class="stats-dashboard" aria-labelledby="statsDashTitle">
+    <div class="stats-dashboard__head">
+      <div>
+        <h2 id="statsDashTitle">Estadisticas de tus anuncios</h2>
+        <p class="stats-dashboard__sub">Ultimos {{ analytics.dias }} dias — vistas y clics en lotes</p>
+      </div>
+    </div>
+
+    <div class="stats-dashboard__grid">
+      <article class="stats-card stats-card--chart">
+        <header class="stats-card__head">
+          <span class="stats-card__label">Vistas</span>
+          <div class="stats-card__metric">
+            <strong class="stats-card__value">{{ analytics.vistas_total }}</strong>
+            {% if analytics.vistas_delta > 0 %}
+              <span class="stats-card__delta stats-card__delta--up">+{{ analytics.vistas_delta }} vs periodo anterior</span>
+            {% elif analytics.vistas_delta < 0 %}
+              <span class="stats-card__delta stats-card__delta--down">{{ analytics.vistas_delta }} vs periodo anterior</span>
+            {% else %}
+              <span class="stats-card__delta">Igual que el periodo anterior</span>
+            {% endif %}
+          </div>
+        </header>
+        <canvas id="chartVistas" height="120" aria-label="Grafico de vistas por dia"></canvas>
+        {% if analytics.dia_pico_vistas.total > 0 %}
+          <p class="stats-card__foot">Dia con mas vistas: <strong>{{ analytics.dia_pico_vistas.fecha }}</strong> ({{ analytics.dia_pico_vistas.total }})</p>
+        {% endif %}
+      </article>
+
+      <article class="stats-card stats-card--chart">
+        <header class="stats-card__head">
+          <span class="stats-card__label">Clics en lotes</span>
+          <div class="stats-card__metric">
+            <strong class="stats-card__value">{{ analytics.lotes_eventos_total }}</strong>
+            <span class="stats-card__delta">Interacciones en el mapa / masterplan</span>
+          </div>
+        </header>
+        <canvas id="chartLotes" height="120" aria-label="Grafico de clics en lotes por dia"></canvas>
+        {% if analytics.dia_pico_lotes.total > 0 %}
+          <p class="stats-card__foot">Dia con mas interes: <strong>{{ analytics.dia_pico_lotes.fecha }}</strong> ({{ analytics.dia_pico_lotes.total }} clics)</p>
+        {% endif %}
+      </article>
+
+      <article class="stats-card stats-card--lotes">
+        <h3 class="stats-card__title">Estado de tus lotes</h3>
+        <ul class="stats-lotes-estado">
+          <li><span class="stats-pill stats-pill--disp">{{ analytics.lotes_estado.disponible }}</span> Disponibles</li>
+          <li><span class="stats-pill stats-pill--res">{{ analytics.lotes_estado.reservado }}</span> Reservados</li>
+          <li><span class="stats-pill stats-pill--vend">{{ analytics.lotes_estado.vendido }}</span> Vendidos</li>
+        </ul>
+        {% if analytics.top_lotes %}
+          <h4 class="stats-card__subtitle">Lotes mas vistos</h4>
+          <ol class="stats-top-lotes">
+            {% for lt in analytics.top_lotes %}
+              <li>
+                <a href="{{ url_for('main.detalle', pid=lt.propiedad_id) }}">
+                  Lote {{ lt.lote_ref }} — {{ lt.titulo|truncate(32) }}
+                </a>
+                <span class="stats-top-lotes__n">{{ lt.eventos }} clics</span>
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="stats-card__hint">Cuando visitantes abran lotes en el mapa, veras aqui los mas consultados.</p>
+        {% endif %}
+      </article>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if anuncios %}
+    <div class="perfil-anuncios" style="margin-top: 2.5rem;">
+      <div class="section__head">
+        <h2>Mis publicaciones ({{ anuncios|length }})</h2>
+        <a class="link-more link-more--dark" href="{{ url_for('propiedades.mis_anuncios') }}">Gestionar todas &rarr;</a>
+      </div>
+      <div class="grid-props">
+        {% for p in anuncios %}{{ card_propiedad(p) }}{% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <p class="perfil-sin-anuncios" style="margin-top: 2rem;">
+      Aun no tienes publicaciones.
+      <a href="{{ url_for('propiedades.publicar') }}">Publica tu primer anuncio</a>.
+    </p>
+  {% endif %}
+
+  {% if favoritos %}
+    <h2 style="margin-top: 3rem;">Tus favoritos recientes</h2>
+    <div class="grid-props">
+      {% for p in favoritos[:6] %}{{ card_propiedad(p) }}{% endfor %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+{% if anuncios %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var vistas = {{ analytics.vistas_chart | tojson }};
+  var lotes = {{ analytics.lotes_chart | tojson }};
+  function labels(rows) {
+    return rows.map(function (r) {
+      var p = (r.fecha || '').split('-');
+      return p.length === 3 ? p[2] + '/' + p[1] : r.fecha;
+    });
+  }
+  function makeChart(id, rows, color) {
+    var el = document.getElementById(id);
+    if (!el || typeof Chart === 'undefined') return;
+    new Chart(el, {
+      type: 'line',
+      data: {
+        labels: labels(rows),
+        datasets: [{
+          data: rows.map(function (r) { return r.total; }),
+          borderColor: color,
+          backgroundColor: color.replace(')', ', 0.12)').replace('rgb', 'rgba'),
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          pointHitRadius: 12,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 7, font: { size: 10 } } },
+          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } }
+        }
+      }
+    });
+  }
+  makeChart('chartVistas', vistas, 'rgb(59, 130, 246)');
+  makeChart('chartLotes', lotes, 'rgb(255, 107, 0)');
+})();
+</script>
+{% endif %}
+{% endblock %}

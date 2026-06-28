@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_errors, google_signin_button %}
+
+{% block title %}Crear cuenta - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth__card auth__card--wide">
+    <span class="badge-2050">Es gratis</span>
+    <h1>Crea tu cuenta</h1>
+    <p>Publica anuncios ilimitados y guarda tus propiedades favoritas.</p>
+
+    {{ google_signin_button(
+      label='Registrarse con Google',
+      href=url_for('auth.google_login'),
+      enabled=google_oauth_enabled
+    ) }}
+    <p class="auth__divider"><span>o completa el formulario</span></p>
+
+    <form method="post" class="form form--grid">
+      {{ form.hidden_tag() }}
+      {{ form_errors(form) }}
+      <label>Nombre completo {{ form.nombre() }}</label>
+      <label>Email {{ form.email() }}</label>
+      <label>Telefono {{ form.telefono() }}</label>
+      <label>Contrasena {{ form.password() }}</label>
+      <label>Confirmar contrasena {{ form.confirmar() }}</label>
+      <label class="check check--full">{{ form.es_agente() }} <span>Soy agente o agencia inmobiliaria</span></label>
+      <label class="check check--full">
+        {{ form.acepta_terminos() }}
+        <span>Acepto los <a href="{{ url_for('main.legal_terminos') }}" target="_blank" rel="noopener">terminos y condiciones</a>
+          y la <a href="{{ url_for('main.legal_privacidad') }}" target="_blank" rel="noopener">politica de privacidad</a></span>
+      </label>
+      {{ form.submit(class_="btn btn--primary btn--block") }}
+    </form>
+
+    <div class="auth__alt">
+      <span>Ya tienes cuenta?</span>
+      <a href="{{ url_for('auth.login') }}">Ingresar</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_errors %}
+
+{% block title %}{{ 'Editar anuncio' if editar else 'Publicar anuncio' }} - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    {% if editar %}
+      <span class="badge-2050">Edicion</span>
+      <h1>Editar publicacion</h1>
+      <p>Actualiza lotes vendidos/reservados, datos del anuncio y fotos.</p>
+    {% else %}
+      <span class="badge-2050">Anuncia gratis</span>
+      <h1>Publica tu propiedad</h1>
+      <p>Anuncios ilimitados, alta visibilidad y soporte 24/7.</p>
+    {% endif %}
+  </header>
+
+  {% if editar %}
+  <div class="mis-anuncios__toolbar" style="margin-bottom:1.25rem;">
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.mis_anuncios') }}">Mis anuncios</a>
+    <a class="btn btn--ghost" href="{{ url_for('main.detalle', pid=propiedad.PropiedadId) }}">Ver publicacion</a>
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="form form--card" id="formPublicar"
+        {% if editar %}action="{{ url_for('propiedades.editar', pid=propiedad.PropiedadId) }}"{% endif %}>
+    {{ form.hidden_tag() }}
+    {{ form_errors(form) }}
+
+    <div class="form-grid">
+      <label class="full">Titulo del anuncio {{ form.titulo(placeholder="Ej: Lote 500 m² San Jeronimo") }}</label>
+      <label class="full">Descripcion {{ form.descripcion(rows=5, placeholder="Describe tu propiedad...") }}</label>
+      <label>Operacion {{ form.operacion() }}</label>
+      <label>Tipo {{ form.tipo_id(id="tipo_id") }}</label>
+      <label>Ciudad {{ form.ciudad_id() }} <small class="hint">Cusco para el mapa del portal</small></label>
+      <label>Distrito / zona {{ form.distrito(placeholder="Ej: San Blas, Wanchaq") }}</label>
+      <label class="full">Direccion {{ form.direccion(placeholder="Calle, numero, referencia") }}</label>
+      <label>Precio {{ form.precio() }}</label>
+      <label>Moneda {{ form.moneda() }}</label>
+      <label>Area total (m2) {{ form.area_total() }}</label>
+      <label>Area construida (m2) {{ form.area_construida() }}</label>
+      <label>Habitaciones {{ form.habitaciones() }}</label>
+      <label>Banos {{ form.banos() }}</label>
+      <label>Cocheras {{ form.cocheras() }}</label>
+    </div>
+
+    <section class="publicar-mapa publicar-mapa--pro" data-geo-mode="punto" aria-labelledby="publicarMapaTitle">
+      <div class="publicar-mapa__head">
+        <div>
+          <span class="publicar-mapa__badge">Georreferenciacion profesional</span>
+          <h2 id="publicarMapaTitle">Delimitacion del terreno — Google Maps + UTM</h2>
+          <p class="publicar-mapa__intro" id="publicarMapaIntro">
+            Elige como ubicar tu propiedad: un <strong>punto</strong> en el mapa, dibujar un <strong>poligono</strong>
+            o importar lotes desde <strong>SVG / DXF</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="geo-mode" id="geoModeSelector" role="tablist" aria-label="Metodo de ubicacion">
+        <button type="button" class="geo-mode__btn is-active" data-geo-mode="punto" role="tab" aria-selected="true">
+          <span class="geo-mode__icon" aria-hidden="true">&#9679;</span>
+          <span class="geo-mode__text">
+            <strong>Solo un punto</strong>
+            <small>Marca la ubicacion en el mapa</small>
+          </span>
+        </button>
+        <button type="button" class="geo-mode__btn" data-geo-mode="poligono" role="tab" aria-selected="false">
+          <span class="geo-mode__icon" aria-hidden="true">&#11041;</span>
+          <span class="geo-mode__text">
+            <strong>Poligono</strong>
+            <small>Dibuja el contorno del lote</small>
+          </span>
+        </button>
+        <button type="button" class="geo-mode__btn" data-geo-mode="plano" role="tab" aria-selected="false">
+          <span class="geo-mode__icon" aria-hidden="true">&#128196;</span>
+          <span class="geo-mode__text">
+            <strong>Cargar SVG / DXF</strong>
+            <small>Importa plano con muchos lotes</small>
+          </span>
+        </button>
+      </div>
+      <input type="hidden" name="geo_modo" id="geo_modo" value="punto" />
+
+      <div class="publicar-mapa__head publicar-mapa__head--tools">
+        <div class="geo-mode-panel" data-geo-panel="punto">
+          <p class="geo-mode-panel__hint">
+            Haz <strong>clic en el mapa</strong> o arrastra el marcador naranja. Tambien puedes usar
+            <strong>UTM / GPS</strong> en el panel derecho.
+          </p>
+        </div>
+
+        <div class="geo-mode-panel" data-geo-panel="poligono" hidden>
+          <p class="geo-mode-panel__hint">
+            Dibuja uno o mas poligonos. Al cerrar cada uno se completan
+            <strong>etapa, manzana, lote, nombre y area</strong>.
+          </p>
+          <div class="publicar-mapa__actions">
+            <label class="pub-draw-default" title="Se asigna a cada nuevo poligono">
+              Etapa
+              <input type="text" id="inputDefEtapa" value="1" placeholder="1" maxlength="8" />
+            </label>
+            <label class="pub-draw-default" title="Se asigna a cada nuevo poligono">
+              Mz
+              <input type="text" id="inputDefManzana" value="A" placeholder="A" maxlength="8" />
+            </label>
+            <label class="pub-draw-estado">
+              Estado
+              <select id="selectDibujoEstado" title="Color del proximo poligono">
+                <option value="disponible" selected>Disponible</option>
+                <option value="reservado">Reservado</option>
+                <option value="vendido">Vendido</option>
+                <option value="calle">Calle</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn--primary btn--small" id="btnDibujarLote">Agregar poligono</button>
+            <button type="button" class="btn btn--ghost btn--small" id="btnDibujarOtro" title="Dibuja otro lote sin borrar los anteriores">+ Otro poligono</button>
+            <button type="button" class="btn btn--accent btn--small" id="btnFinalizarPoligono" hidden>Finalizar poligono</button>
+            <button type="button" class="btn btn--ghost btn--small" id="btnNumerarTodos" title="Asigna etapa, mz, lote y nombre a todos los poligonos">Numerar todos los lotes</button>
+            <button type="button" class="btn btn--ghost btn--small btn--move-project" id="btnMoverProyectoPoligono" title="Arrastra la esquina inferior izquierda para mover todos los poligonos a la vez">Mover todo el proyecto</button>
+            <button type="button" class="btn btn--ghost btn--small btn--transform-project" id="btnEscalarProyectoPoligono" title="Escala todos los lotes desde la esquina inferior izquierda">Escalar proyecto</button>
+            <button type="button" class="btn btn--ghost btn--small btn--transform-project" id="btnRotarProyectoPoligono" title="Rota todos los lotes desde la esquina inferior izquierda">Rotar proyecto</button>
+            <button type="button" class="btn btn--ghost btn--small" id="btnEliminarPoligono">Eliminar seleccionado</button>
+            <button type="button" class="btn btn--ghost btn--small" id="btnBorrarLote">Limpiar todo</button>
+          </div>
+        </div>
+
+        <div class="geo-mode-panel" data-geo-panel="plano" hidden>
+          <p class="geo-mode-panel__hint">
+            Sube un archivo <strong>SVG o DXF</strong> con los lotes. Luego ubica el plano con coordenadas UTM
+            y el ancho real en metros.
+          </p>
+        </div>
+
+        <div class="publicar-mapa__actions publicar-mapa__actions--map">
+          <button type="button" class="mapa-tipo-btn" id="btnMapaSatelite">Satelite</button>
+          <button type="button" class="mapa-tipo-btn is-active" id="btnMapaHibrido">Calles</button>
+          <button type="button" class="mapa-tipo-btn" id="btnMapaPlano">Plano</button>
+        </div>
+      </div>
+
+      {% if requiere_google %}
+      <div class="mapa-aviso mapa-aviso--warn">Configura <code>GOOGLE_MAPS_API_KEY</code> en <code>.env</code>.</div>
+      {% endif %}
+
+      <p id="publicarMapaStatus" class="publicar-mapa__status">Elige un metodo de ubicacion arriba y marca tu propiedad en el mapa.</p>
+
+      <div id="planoMoveLive" class="plano-move-live" hidden>
+        <strong>Esquina inferior izquierda (referencia)</strong>
+        <span>GPS: <span id="planoMoveGps">—</span></span>
+        <span>UTM: <span id="planoMoveUtm">—</span></span>
+      </div>
+
+      <div id="planoTransformPanel" class="plano-transform-panel" hidden>
+        <div id="planoScaleControls" class="plano-transform-panel__block" hidden>
+          <div class="plano-transform-panel__head">
+            <strong>Escalar proyecto</strong>
+            <button type="button" class="btn btn--ghost btn--small" id="btnFinishScale">Finalizar</button>
+          </div>
+          <label class="plano-transform-slider">
+            <span>Escala</span>
+            <input type="range" id="inputTransformScale" min="50" max="200" value="100" step="1" />
+            <output id="transformScalePct">100%</output>
+          </label>
+          <p class="plano-transform-panel__hint">Ancla: esquina inferior izquierda. O calibra con una medida en el mapa:</p>
+          <div class="plano-transform-panel__measure">
+            <button type="button" class="btn btn--ghost btn--small" id="btnScalePickPoints">Marcar 2 puntos</button>
+            <span id="scaleMeasureInfo" class="plano-measure-info">—</span>
+            <label>Distancia real (m)
+              <input type="number" id="inputScaleDistReal" step="0.01" min="0" placeholder="Ej: 12.5" disabled />
+            </label>
+            <button type="button" class="btn btn--primary btn--small" id="btnApplyScaleMeasure" disabled>Aplicar</button>
+          </div>
+        </div>
+        <div id="planoRotateControls" class="plano-transform-panel__block" hidden>
+          <div class="plano-transform-panel__head">
+            <strong>Rotar proyecto</strong>
+            <button type="button" class="btn btn--ghost btn--small" id="btnFinishRotate">Finalizar</button>
+          </div>
+          <label class="plano-transform-slider">
+            <span>Rotacion</span>
+            <input type="range" id="inputTransformRotate" min="-180" max="180" value="0" step="0.5" />
+            <output id="transformRotateDeg">0°</output>
+          </label>
+        </div>
+      </div>
+
+      <div class="plano-import" id="panelPlanoImport" hidden>
+        <div class="plano-import__bar plano-import__bar--upload">
+          <input type="file" id="inputPlanoArchivo" accept=".svg,.dxf,.dwg,image/svg+xml" class="plano-import__file" />
+          <div class="plano-import__upload">
+            <button type="button" class="btn btn--accent btn--small" id="btnCargarPlanoBar">
+              Elegir archivo SVG o DXF
+            </button>
+            <span class="plano-import__hint">
+              Formatos: <strong>.svg</strong>, <strong>.dxf</strong> (max. 12 MB).
+              DWG: exporta como DXF desde AutoCAD / Civil 3D.
+            </span>
+            <span id="planoImportStatus" class="plano-import__status"></span>
+          </div>
+          <div class="plano-leyenda" aria-label="Leyenda de estados">
+            <span class="plano-leyenda__item"><i style="background:#22c55e"></i> Disponible</span>
+            <span class="plano-leyenda__item"><i style="background:#3b82f6"></i> Reservado</span>
+            <span class="plano-leyenda__item"><i style="background:#ef4444"></i> Vendido</span>
+            <span class="plano-leyenda__item"><i style="background:#64748b"></i> Calle</span>
+          </div>
+          <p id="planoResumen" class="plano-resumen"></p>
+        </div>
+
+        <div id="panelPlanoDetalle" class="plano-import__detalle" hidden>
+        <div class="plano-import__calib">
+          <h4>Ubicar plano en el mapa</h4>
+          <p class="plano-import__steps">
+            El punto UTM debe ser la <strong>esquina inferior izquierda</strong> del dibujo (igual que en
+            &quot;Ir a coordenada UTM&quot; del panel). Luego indica cuántos <strong>metros</strong> mide el ancho real del plano.
+          </p>
+          <div id="planoCalibAviso" class="plano-calib-aviso" hidden></div>
+          <div class="pub-coords__inputs plano-import__inputs">
+            <label>UTM Este (E) <input type="number" id="inputPlanoUtmE" step="0.001" placeholder="Ej: 735842" /></label>
+            <label>UTM Norte (N) <input type="number" id="inputPlanoUtmN" step="0.001" placeholder="Ej: 8495123" /></label>
+            <label>Ancho real (m) <input type="number" id="inputPlanoAnchoM" step="0.1" placeholder="100" title="Ancho del plano en metros en el terreno" /></label>
+            <label>Rotacion (°) <input type="number" id="inputPlanoRotacion" step="0.1" value="0" /></label>
+            <label>Escala (m/u) <input type="number" id="inputPlanoEscala" step="0.0001" placeholder="auto" title="Solo si no usas ancho real" /></label>
+          </div>
+          <div class="plano-import__actions">
+            <button type="button" class="btn btn--primary btn--small" id="btnPlanoAplicar">Aplicar al mapa</button>
+            <button type="button" class="btn btn--ghost btn--small btn--move-project" id="btnMoverProyecto" title="Arrastra la esquina inferior izquierda para mover todo el plano">Mover todo el proyecto</button>
+            <button type="button" class="btn btn--ghost btn--small btn--transform-project" id="btnEscalarProyecto" title="Escala el plano desde la esquina inferior izquierda">Escalar proyecto</button>
+            <button type="button" class="btn btn--ghost btn--small btn--transform-project" id="btnRotarProyecto" title="Rota el plano desde la esquina inferior izquierda">Rotar proyecto</button>
+            <button type="button" class="btn btn--ghost btn--small" id="btnPlanoCopiarUtm">Copiar UTM del panel</button>
+            <button type="button" class="btn btn--ghost btn--small" id="btnPlanoLimpiar">Quitar plano</button>
+          </div>
+        </div>
+
+        <div class="plano-import__editor">
+          <div class="plano-import__sel">
+            <label>Estado del poligono seleccionado
+              <select id="selectPlanoEstado">
+                <option value="disponible">Disponible (verde)</option>
+                <option value="reservado">Reservado (azul)</option>
+                <option value="vendido">Vendido (rojo)</option>
+                <option value="calle">Calle / via (gris)</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn--ghost btn--small" id="btnPlanoEstadoSel">Asignar</button>
+          </div>
+          <div class="pub-coords__table-wrap">
+            <table class="pub-coords__table plano-table plano-table--meta">
+              <thead>
+                <tr><th></th><th>Etapa</th><th>Mz</th><th>Lt</th><th>Nombre</th><th>Area</th><th>Precio</th><th>Estado</th><th></th></tr>
+              </thead>
+              <tbody id="planoLotesList">
+                <tr><td colspan="9" class="pub-coords__empty">Dibuja o importa poligonos: etapa, mz, lote, nombre y area se llenan solos.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="publicar-mapa__workspace">
+        <div class="publicar-mapa__map-wrap masterplan-map">
+          <div id="mapa-publicar" class="mapa-canvas mapa-canvas--publicar" aria-label="Mapa Google para delimitar lote">
+            <div class="mapa-loading" id="mapaPublicarLoading">Cargando Google Maps</div>
+          </div>
+          <aside id="loteInfoPanel" class="lote-panel lote-panel--edit" hidden>
+            <button type="button" class="lote-panel__close" id="lotePanelClose" aria-label="Cerrar">×</button>
+            <span class="lote-panel__etapa" id="lotePanelEtapa"></span>
+            <p class="lote-panel__brand" id="lotePanelTitle">Master plan</p>
+            <h3 class="lote-panel__title" id="lotePanelSubtitle">Selecciona un lote</h3>
+            <div class="lote-panel__section">
+              <h4>Informacion</h4>
+              <dl class="lote-panel__dl">
+                <div><dt>Tipologia</dt><dd id="lotePanelTipologia">—</dd></div>
+                <div><dt>Area</dt><dd id="lotePanelArea">—</dd></div>
+                <div><dt>Estado</dt><dd><span class="lote-panel__estado" id="lotePanelEstado">—</span></dd></div>
+              </dl>
+            </div>
+            <div class="lote-panel__section">
+              <h4>Perimetro (aprox.)</h4>
+              <div class="lote-panel__perimetro" id="lotePanelPerimetro"></div>
+            </div>
+            <div class="lote-panel__edit-fields">
+              <h4>Datos del lote</h4>
+              <div class="lote-panel__inputs">
+                <label>Etapa <input type="text" id="loteInpEtapa" placeholder="Ej: 3" /></label>
+                <label>Manzana <input type="text" id="loteInpManzana" placeholder="Ej: F" /></label>
+                <label>Lote <input type="text" id="loteInpLote" placeholder="Ej: 05" /></label>
+                <label class="full">Tipologia <input type="text" id="loteInpTipologia" placeholder="Calle, esquina, vista..." /></label>
+                <label>Estado
+                  <select id="loteInpEstado">
+                    <option value="disponible">Disponible</option>
+                    <option value="reservado">Reservado</option>
+                    <option value="vendido">Vendido</option>
+                    <option value="calle">Calle</option>
+                  </select>
+                </label>
+                <label>Precio (lote)
+                  <input type="number" id="loteInpPrecio" min="0" step="100" placeholder="Vacío = proporcional al precio total" />
+                </label>
+              </div>
+              <p class="lote-panel__hint-edit" id="lotePanelHintEdit">Arrastra los vertices del poligono en el mapa para ajustar el lote.</p>
+            </div>
+          </aside>
+          <p class="lote-map-hint draw-map-hint" id="drawMapHint" hidden>
+            <span>Clic en cada esquina del lote · cierra en la primera o pulsa Finalizar</span>
+          </p>
+          <p class="lote-map-hint" id="loteMapHint" hidden>
+            <span>Dale click al lote y conoce sus caracteristicas y disponibilidad</span>
+          </p>
+        </div>
+
+        <aside class="pub-coords card">
+          <h3>Coordenadas del lote</h3>
+
+          <div class="pub-coords__summary">
+            <div class="pub-coords__metric">
+              <span>Lat / Lng (centro)</span>
+              <strong><span id="coordLatDisp">—</span>, <span id="coordLngDisp">—</span></strong>
+            </div>
+            <div class="pub-coords__metric">
+              <span>UTM WGS84 (centro)</span>
+              <strong id="coordUtmDisp">—</strong>
+            </div>
+            <div class="pub-coords__metric pub-coords__metric--highlight pub-coords__metric--polygon">
+              <span>Area del poligono</span>
+              <strong id="coordAreaDisp">—</strong>
+              <em id="coordHaDisp">—</em>
+            </div>
+          </div>
+
+          <div class="pub-coords__block">
+            <h4>Ir a coordenada UTM</h4>
+            <div class="pub-coords__inputs">
+              <label>Zona <input type="number" id="inputUtmZona" min="1" max="60" placeholder="18" value="18" /></label>
+              <label>Hem
+                <select id="selectUtmHem">
+                  <option value="S" selected>S</option>
+                  <option value="N">N</option>
+                </select>
+              </label>
+              <label>Este (E) <input type="number" id="inputUtmE" step="0.001" placeholder="500000" /></label>
+              <label>Norte (N) <input type="number" id="inputUtmN" step="0.001" placeholder="8500000" /></label>
+            </div>
+            <button type="button" class="btn btn--ghost btn--small btn--block" id="btnIrUtm">Centrar mapa en UTM</button>
+          </div>
+
+          <div class="pub-coords__block">
+            <h4>Ir a GPS (grados decimales)</h4>
+            <div class="pub-coords__inputs pub-coords__inputs--2">
+              <label>Latitud <input type="number" id="inputGpsLat" step="any" placeholder="-13.5319" /></label>
+              <label>Longitud <input type="number" id="inputGpsLng" step="any" placeholder="-71.9675" /></label>
+            </div>
+            <button type="button" class="btn btn--ghost btn--small btn--block" id="btnIrGps">Centrar mapa en GPS</button>
+          </div>
+
+          <div class="pub-coords__block pub-coords__block--table pub-coords__block--vertices">
+            <h4>Vertices del poligono (UTM)</h4>
+            <div class="pub-coords__table-wrap">
+              <table class="pub-coords__table">
+                <thead>
+                  <tr><th>Pto</th><th>Este</th><th>Norte</th><th>Zona</th></tr>
+                </thead>
+                <tbody id="coordVerticesList">
+                  <tr><td colspan="4" class="pub-coords__empty">Dibuja el poligono para ver vertices UTM</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <input type="hidden" name="latitud" id="latitud" value="{% if editar and propiedad and propiedad.Latitud is not none %}{{ propiedad.Latitud }}{% endif %}" />
+      <input type="hidden" name="longitud" id="longitud" value="{% if editar and propiedad and propiedad.Longitud is not none %}{{ propiedad.Longitud }}{% endif %}" />
+      <input type="hidden" name="poligono_lote" id="poligono_lote" value="" />
+      <input type="hidden" name="utm_zona" id="utm_zona" value="{% if editar and propiedad and propiedad.UtmZona %}{{ propiedad.UtmZona }}{% endif %}" />
+      <input type="hidden" name="utm_este" id="utm_este" value="{% if editar and propiedad and propiedad.UtmEste is not none %}{{ propiedad.UtmEste }}{% endif %}" />
+      <input type="hidden" name="utm_norte" id="utm_norte" value="{% if editar and propiedad and propiedad.UtmNorte is not none %}{{ propiedad.UtmNorte }}{% endif %}" />
+      <input type="hidden" name="area_mapa_m2" id="area_mapa_m2" value="{% if editar and propiedad and propiedad.AreaMapaM2 is not none %}{{ propiedad.AreaMapaM2 }}{% endif %}" />
+      <input type="hidden" name="utm_vertices" id="utm_vertices" value="" />
+      {% if editar and propiedad and propiedad.PlanMasterplan %}
+      <textarea name="plan_masterplan" id="plan_masterplan" hidden>{{ propiedad.PlanMasterplan }}</textarea>
+      {% else %}
+      <input type="hidden" name="plan_masterplan" id="plan_masterplan" value="" />
+      {% endif %}
+
+      <p class="publicar-mapa__hint" id="publicarMapaHint">
+        <i class="mapa-legend__lote"></i>
+        <span data-geo-hint="punto">Punto: solo ubicacion. Poligono o SVG: delimitan el terreno y calculan area.</span>
+      </p>
+    </section>
+
+    {% if editar and imagenes_actuales %}
+    <section class="imagenes-edit" aria-labelledby="imagenesEditTitle">
+      <h2 id="imagenesEditTitle">Fotos actuales</h2>
+      <p class="imagenes-edit__hint">Marca una como principal, elimina las que ya no quieras y agrega nuevas abajo.</p>
+      <div class="imagenes-edit__grid">
+        {% for img in imagenes_actuales %}
+        <div class="imagen-edit-card">
+          <img src="{{ img.Url }}" alt="Foto {{ loop.index }}" loading="lazy" />
+          <label class="imagen-edit-card__opt">
+            <input type="radio" name="imagen_principal" value="{{ img.ImagenId }}" {% if img.EsPrincipal %}checked{% endif %} />
+            Principal
+          </label>
+          <label class="imagen-edit-card__opt imagen-edit-card__opt--danger">
+            <input type="checkbox" name="eliminar_imagen" value="{{ img.ImagenId }}" />
+            Eliminar
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <div class="form-grid">
+      <label class="full">URL imagen {{ 'nueva' if editar else 'principal' }} {{ form.imagen_url(placeholder="https://...") }}</label>
+      <label class="full">
+        {{ 'Agregar fotos' if editar else 'Subir imagenes (multiples)' }}
+        <input type="file" name="imagenes" multiple accept="image/png,image/jpeg,image/jpg,image/webp" />
+        <small class="hint">PNG, JPG o WEBP. Maximo 10 MB por archivo.</small>
+      </label>
+    </div>
+
+    <section class="publicar-videos" aria-labelledby="publicarVideosTitle">
+      <h2 id="publicarVideosTitle">Videos (opcional)</h2>
+      <p class="hint">Pega enlaces de <strong>YouTube</strong>, <strong>TikTok</strong> o <strong>Facebook</strong>. Una URL por linea (maximo 6).</p>
+
+      {% if editar and videos_actuales %}
+      <div class="videos-edit__list">
+        {% for v in videos_actuales %}
+        <div class="videos-edit__item">
+          <span class="chip chip--type">{{ v.Plataforma|capitalize }}</span>
+          <a href="{{ v.UrlOriginal }}" target="_blank" rel="noopener noreferrer" class="videos-edit__link">{{ v.UrlOriginal|truncate(60) }}</a>
+          <label class="videos-edit__del">
+            <input type="checkbox" name="eliminar_video" value="{{ v.VideoId }}" />
+            Eliminar
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <label class="full">
+        {{ 'Agregar videos' if editar else 'URLs de video' }}
+        {{ form.video_urls(rows=3, placeholder="https://www.youtube.com/watch?v=...\nhttps://www.tiktok.com/@usuario/video/...\nhttps://www.facebook.com/watch/?v=...") }}
+      </label>
+    </section>
+
+    {% if editar %}
+    <button type="submit" class="btn btn--primary btn--lg" id="btnGuardarEdicion">Guardar cambios</button>
+    <p class="hint" id="editSaveHint">Los lotes, estados (vendido/reservado) y fotos se guardan al pulsar este boton.</p>
+    {% else %}
+    <button type="submit" class="btn btn--primary btn--lg">Publicar</button>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/map-markers.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/plano-import.js') }}?v=26"></script>
+<script src="{{ url_for('static', filename='js/publicar-mapa.js') }}?v=23"></script>
+<script>
+  MPHPublicarMapa.configure({
+    containerId: 'mapa-publicar',
+    googleKey: {{ google_maps_key | tojson }},
+    tipos: {{ tipos | tojson }},
+    modoEdicion: {{ editar|default(false)|tojson }},
+    propiedadId: {{ propiedad.PropiedadId if editar and propiedad else 'null' }},
+    initialMap: {% if editar and propiedad %}{
+      latitud: {{ propiedad.Latitud | default(none) | tojson }},
+      longitud: {{ propiedad.Longitud | default(none) | tojson }},
+      poligono_lote: {{ propiedad.PoligonoLote | default(none) | tojson }},
+      utm_zona: {{ propiedad.UtmZona | default(none) | tojson }},
+      utm_este: {{ propiedad.UtmEste | default(none) | tojson }},
+      utm_norte: {{ propiedad.UtmNorte | default(none) | tojson }},
+      area_mapa_m2: {{ propiedad.AreaMapaM2 | default(none) | tojson }},
+      utm_vertices: {{ propiedad.UtmVertices | default(none) | tojson }},
+      plan_masterplan: {{ propiedad.PlanMasterplan | default(none) | tojson }}
+    }{% else %}null{% endif %}
+  });
+</script>
+{% endblock %}

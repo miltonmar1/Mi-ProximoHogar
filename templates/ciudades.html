@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Ciudades - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Explora por ciudad</h1>
+    <p>Encuentra propiedades en las principales ciudades del Peru.</p>
+  </header>
+
+  <div class="grid-cities grid-cities--lg">
+    {% for c in ciudades %}
+      <a class="city-card" href="{{ url_for('main.propiedades', ciudad_id=c.CiudadId) }}"
+         style="--bg: url('{{ c.ImagenUrl or '' }}')">
+        <div class="city-card__overlay"></div>
+        <div class="city-card__body">
+          <h3>{{ c.Nombre }}</h3>
+          <p>{{ c.Region }} &middot; {{ c.Total }} propiedades</p>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,122 @@
+================================================================================
+  ARREGLAR miproximohogar.org — PASOS EXACTOS (lo que falla ahora)
+================================================================================
+
+PROBLEMA:
+  - Ves "Ya todo esta listo" = pagina default.php de Hostinger
+  - Tus archivos estan FUERA de public_html (en la carpeta padre)
+  - Dentro de public_html solo hay subcarpeta "miproximohogar" + default.php
+  - La BD MySQL SI esta bien (u328495683_miproximohogar) ✓
+
+================================================================================
+PASO 1 — MOVER ARCHIVOS A public_html
+================================================================================
+
+En Administrador de archivos:
+
+A) Entra a la carpeta PADRE (donde ves routes, templates, app.py, .env, venv)
+
+B) Selecciona TODO esto y MUEVELO a public_html:
+   - app.py
+   - passenger_wsgi.py
+   - wsgi.py
+   - config.py, database.py, models.py, forms.py, extensions.py, sql_dialect.py
+   - init_db_hostinger.py
+   - requirements.txt
+   - carpetas: routes, templates, static, services, sql, scripts
+   - archivo .env (o sube deploy/env.miproximohogar.org.txt renombrado a .env)
+
+C) NO muevas a public_html:
+   - venv/  (Hostinger instala paquetes por su cuenta)
+   - deploy/ (opcional, no necesario en web)
+   - __pycache__/
+
+D) Si ya tienes archivos en public_html/miproximohogar/:
+   - Abre esa carpeta
+   - Selecciona TODO adentro
+   - Mueve UN NIVEL ARRIBA → directo a public_html
+   - Borra la carpeta vacia miproximohogar
+
+E) public_html debe quedar ASI (ejemplo):
+   public_html/
+     app.py
+     passenger_wsgi.py
+     .env
+     requirements.txt
+     routes/
+     templates/
+     static/
+     ...
+
+================================================================================
+PASO 2 — BORRAR PAGINA DEFAULT
+================================================================================
+
+En public_html ELIMINA:
+   - default.php   ← esto causa "Ya todo esta listo"
+   - DO_NOT_UPLOAD_HERE (opcional)
+
+================================================================================
+PASO 3 — CONFIGURAR .env
+================================================================================
+
+Archivo: public_html/.env
+
+Copia deploy/env.miproximohogar.org.txt y completa:
+
+MYSQL_DATABASE=u328495683_miproximohogar
+MYSQL_USER=u328495683_miproximohogar
+MYSQL_PASSWORD=(la que creaste en hPanel > MySQL)
+
+MYSQL_HOST=localhost
+DB_ENGINE=mysql
+SITE_URL=https://miproximohogar.org
+FLASK_DEBUG=0
+
+Si el usuario MySQL en tu panel es distinto, copialo exacto de hPanel.
+
+================================================================================
+PASO 4 — ACTIVAR PYTHON (OBLIGATORIO)
+================================================================================
+
+hPanel > Sitios web > miproximohogar.org > (busca una de estas):
+
+  - "Aplicaciones Python"
+  - "Python" / "Setup Python App"
+
+Configura:
+  - Directorio de la aplicacion: public_html
+  - Archivo de entrada / startup: passenger_wsgi.py
+  - Version Python: 3.11 o 3.12
+
+Luego instala dependencias:
+  pip install -r requirements.txt
+
+(Si el panel tiene boton "Install" o terminal SSH, usalo ahi.)
+
+================================================================================
+PASO 5 — PERMISOS
+================================================================================
+
+Carpeta static/uploads → permisos 755 o 775 (debe poder escribir fotos)
+
+================================================================================
+PASO 6 — PROBAR
+================================================================================
+
+Abre: https://miproximohogar.org
+
+Login demo:
+  Email: demo@miproximohogar.pe
+  Password: Demo2050!
+
+================================================================================
+SI SIGUE SIN FUNCIONAR
+================================================================================
+
+1. Revisa logs en hPanel > Archivos de registro / Error log
+2. Confirma que passenger_wsgi.py esta en public_html (no en subcarpeta)
+3. Confirma que borraste default.php
+4. Verifica password MySQL en .env (sin espacios al final)
+
+================================================================================

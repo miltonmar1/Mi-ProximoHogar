@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Error - {{ marca }}{% endblock %}
+{% block content %}
+<section class="section error-page">
+  <div class="error-code">500</div>
+  <h1>Algo salio mal</h1>
+  <p>Ocurrio un error procesando tu solicitud. Intenta de nuevo en unos minutos.</p>
+  <a class="btn btn--primary" href="{{ url_for('main.index') }}">Volver al inicio</a>
+</section>
+{% endblock %}

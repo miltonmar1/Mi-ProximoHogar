@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+
+
+{% block title %}{{ lista.Titulo }} - Mapa compartido - {{ marca }}{% endblock %}
+
+
+
+{% block body_class %} page-mapa page-mapa--shared{% endblock %}
+
+
+
+{% block og_title %}{{ lista.Titulo }} - {{ marca }}{% endblock %}
+
+{% block og_description %}Seleccion de {{ stats.total }} propiedad{{ 'es' if stats.total != 1 else '' }} compartida{{ 's' if stats.total != 1 else '' }} por {{ lista.PropietarioNombre or 'anunciante' }}.{% endblock %}
+
+
+
+{% block content %}
+
+<section class="section section--narrow page-mapa page-mapa--shared">
+
+  <header class="share-hero card">
+
+    <div class="share-hero__brand">
+
+      <a class="share-hero__logo" href="{{ url_for('main.index') }}">{{ marca }}</a>
+
+      <span class="share-map-badge">Mapa compartido</span>
+
+    </div>
+
+    <div class="share-hero__main">
+
+      <h1>{{ lista.Titulo }}</h1>
+
+      <p class="share-hero__lead">
+
+        Seleccion curada de
+
+        {% if lista.PropietarioEsAgente %}
+
+          <a href="{{ url_for('main.agente', uid=lista.UsuarioId) }}">{{ lista.PropietarioNombre }}</a>
+
+        {% else %}
+
+          <strong>{{ lista.PropietarioNombre or 'anunciante' }}</strong>
+
+        {% endif %}
+
+        · {{ stats.en_mapa }} en el mapa{% if stats.total != stats.en_mapa %} ({{ stats.total }} en la lista){% endif %}
+
+      </p>
+
+    </div>
+
+    <div class="share-hero__owner">
+
+      {% if lista.PropietarioFoto %}
+
+        <img class="share-hero__avatar share-hero__avatar--img" src="{{ lista.PropietarioFoto }}" alt="" />
+
+      {% else %}
+
+        <div class="share-hero__avatar">{{ (lista.PropietarioNombre or '?')[:1] }}</div>
+
+      {% endif %}
+
+      <div class="share-hero__owner-meta">
+
+        <span class="share-hero__owner-label">{% if lista.PropietarioEsAgente %}Agente{% else %}Anunciante{% endif %}</span>
+
+        <strong>{{ lista.PropietarioNombre }}</strong>
+
+        {% if lista.PropietarioTelefono %}
+
+          {% set wa_msg = 'Hola, vi tu mapa compartido "' ~ lista.Titulo ~ '" en ' ~ marca ~ '.' %}
+
+          {% set wa_link = lista.PropietarioTelefono|whatsapp_url(wa_msg) %}
+
+          <div class="share-hero__contact">
+
+            <a href="tel:{{ lista.PropietarioTelefono }}">{{ lista.PropietarioTelefono }}</a>
+
+            {% if wa_link %}
+
+              <a class="share-hero__wa" href="{{ wa_link }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+
+            {% endif %}
+
+          </div>
+
+        {% endif %}
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+
+  {% if stats.total > 0 %}
+
+  <div class="share-stats">
+
+    <div class="share-stat card">
+
+      <span class="share-stat__value">{{ stats.total }}</span>
+
+      <span class="share-stat__label">En la lista</span>
+
+    </div>
+
+    <div class="share-stat card">
+
+      <span class="share-stat__value">{{ stats.en_mapa }}</span>
+
+      <span class="share-stat__label">En el mapa</span>
+
+    </div>
+
+    {% if stats.precio_desde is not none %}
+
+    <div class="share-stat card">
+
+      <span class="share-stat__value">Desde {{ stats.precio_desde|precio(stats.moneda) }}</span>
+
+      <span class="share-stat__label">{% if stats.precio_max and stats.precio_max != stats.precio_desde %}hasta {{ stats.precio_max|precio(stats.moneda) }}{% else %}Precio{% endif %}</span>
+
+    </div>
+
+    {% endif %}
+
+    {% if stats.ventas %}
+
+    <div class="share-stat card">
+
+      <span class="share-stat__value">{{ stats.ventas }}</span>
+
+      <span class="share-stat__label">En venta</span>
+
+    </div>
+
+    {% endif %}
+
+    {% if stats.alquileres %}
+
+    <div class="share-stat card">
+
+      <span class="share-stat__value">{{ stats.alquileres }}</span>
+
+      <span class="share-stat__label">En alquiler</span>
+
+    </div>
+
+    {% endif %}
+
+    {% for ciudad, n in stats.ciudades[:2] %}
+
+    <div class="share-stat card share-stat--muted">
+
+      <span class="share-stat__value">{{ ciudad }}</span>
+
+      <span class="share-stat__label">{{ n }} anuncio{{ 's' if n != 1 else '' }}</span>
+
+    </div>
+
+    {% endfor %}
+
+  </div>
+
+  {% if stats.tipos %}
+
+  <p class="share-types">
+
+    {% for tipo, n in stats.tipos %}
+
+      <span class="chip chip--type">{{ tipo }} ({{ n }})</span>
+
+    {% endfor %}
+
+  </p>
+
+  {% endif %}
+
+  {% endif %}
+
+
+
+  {% if not google_maps_key %}
+
+  <div class="mapa-aviso mapa-aviso--warn">
+
+    Mapa no disponible: falta configurar Google Maps.
+
+  </div>
+
+  {% elif total == 0 %}
+
+  <div class="mapa-aviso mapa-aviso--warn">
+
+    Este enlace no tiene propiedades con ubicacion en el mapa.
+
+  </div>
+
+  {% else %}
+
+  <div class="mapa-layout mapa-layout--shared">
+
+    <div class="mapa-panel">
+
+      <div class="mapa-toolbar">
+
+        <div class="mapa-toolbar__tipos">
+
+          <button type="button" class="mapa-tipo-btn" data-tipo="roadmap">Mapa</button>
+
+          <button type="button" class="mapa-tipo-btn" data-tipo="satellite">Satelite</button>
+
+          <button type="button" class="mapa-tipo-btn is-active" data-tipo="hybrid">Con nombres</button>
+
+        </div>
+
+      </div>
+
+      <div id="mapaAviso" class="mapa-aviso" hidden></div>
+
+      <div class="mapa-viewport" id="mapaViewport">
+
+        <div id="mapa-propiedades" class="mapa-canvas" aria-label="Mapa compartido de propiedades"></div>
+
+      </div>
+
+      <p class="mapa-hint">Haz clic en un lote o marcador para ver detalles. Solo se muestran los anuncios de este enlace.</p>
+
+    </div>
+
+    <aside class="mapa-sidebar card" id="mapaSidebar">
+
+      <h2>Propiedades ({{ total }})</h2>
+
+      <div id="mapaSidebarContent" class="mapa-sidebar__content">
+
+        <p class="mapa-sidebar__hint">Selecciona un punto en el mapa para ver la ficha.</p>
+
+      </div>
+
+    </aside>
+
+  </div>
+
+  {% endif %}
+
+</section>
+
+{% endblock %}
+
+
+
+{% block scripts_extra %}
+
+{% if google_maps_key and total > 0 %}
+
+<script src="{{ url_for('static', filename='js/map-markers.js') }}?v=2"></script>
+
+<script src="{{ url_for('static', filename='js/plano-import.js') }}?v=27"></script>
+
+<script src="{{ url_for('static', filename='js/mapa.js') }}?v=22"></script>
+
+<script>
+
+  MPHMapa.init({
+
+    containerId: 'mapa-propiedades',
+
+    apiUrl: '{{ url_for("api.mapa_compartido", token=token) }}',
+
+    detalleBase: '{{ url_for("main.detalle", pid=0) }}'.replace('/0', ''),
+
+    shareToken: {{ token | tojson }},
+
+    hideListadoLink: true,
+
+    query: {},
+
+    sidebarId: 'mapaSidebarContent',
+
+    avisoId: 'mapaAviso',
+
+    googleKey: {{ google_maps_key | tojson }},
+
+    center: [{{ map_center_lat }}, {{ map_center_lng }}],
+
+    zoom: {{ map_zoom }},
+
+    autoCiudadFilter: false,
+
+    maxBounds: [[-18.5, -84.5], [-0.5, -68.5]],
+
+    autoLocate: false
+
+  });
+
+</script>
+
+{% endif %}
+
+{% endblock %}
+
+

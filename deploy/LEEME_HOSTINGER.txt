@@ -1,0 +1,16 @@
+MI PROXIMO HOGAR — SUBIDA A HOSTINGER
+=====================================
+
+1. NO uses el asistente "Migrar sitio" (solo PHP/WordPress).
+2. En hPanel > Archivos > public_html de miproximohogar.org
+3. Sube y descomprime este ZIP aqui.
+4. Crea base MySQL en hPanel > Bases de datos.
+5. phpMyAdmin > Importar > sql/schema_mysql.sql
+6. Crea archivo .env en public_html (copia de .env.example)
+7. hPanel > Aplicaciones Python:
+   - Startup: passenger_wsgi.py
+   - pip install -r requirements.txt
+8. Permisos 755 en static/uploads
+
+Dominio: https://miproximohogar.org
+Guia completa: DEPLOY_HOSTINGER.md

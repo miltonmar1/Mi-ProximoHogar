@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_errors, card_propiedad %}
+
+{% block body_class %} page-detalle{% endblock %}
+
+{% block title %}{{ prop.Titulo }} - {{ marca }}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{{ ((prop.Descripcion or (prop.TipoNombre ~ ' en ' ~ prop.Ciudad))|trim)[:160] }}" />
+{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ prop.Titulo }} - {{ marca }}{% endblock %}
+{% block og_description %}{{ (prop.Descripcion or (prop.TipoNombre ~ ' en ' ~ (prop.Distrito or prop.Ciudad)))|truncate(200) }}{% endblock %}
+{% block twitter_title %}{{ prop.Titulo }}{% endblock %}
+{% block twitter_description %}{{ prop.Precio|precio(prop.Moneda) }} - {{ prop.Ciudad }}{% endblock %}
+{% block og_image %}
+{% if imagenes %}
+<meta property="og:image" content="{{ absolute_url(imagenes[0].Url) }}" />
+<meta name="twitter:image" content="{{ absolute_url(imagenes[0].Url) }}" />
+{% endif %}
+{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateListing",
+  "name": {{ prop.Titulo | tojson }},
+  "description": {{ ((prop.Descripcion or '')|truncate(500))|tojson }},
+  "url": {{ absolute_url(request.path) | tojson }},
+  {% if imagenes %}
+  "image": {{ absolute_url(imagenes[0].Url) | tojson }},
+  {% endif %}
+  "offers": {
+    "@type": "Offer",
+    "price": {{ prop.Precio | tojson }},
+    "priceCurrency": {{ prop.Moneda | default('PEN') | tojson }},
+    "availability": "https://schema.org/InStock"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": {{ (prop.Distrito or prop.Ciudad) | tojson }},
+    "addressRegion": {{ prop.Region | tojson }},
+    "addressCountry": "PE"
+    {% if prop.Direccion %},"streetAddress": {{ prop.Direccion | tojson }}{% endif %}
+  }
+  {% if map_lat and map_lng %},
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": {{ map_lat }},
+    "longitude": {{ map_lng }}
+  }
+  {% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="section section--narrow detalle">
+  <nav class="breadcrumb">
+    <a href="{{ url_for('main.index') }}">Inicio</a> /
+    <a href="{{ url_for('main.propiedades') }}">Propiedades</a> /
+    <span>{{ prop.Titulo }}</span>
+  </nav>
+
+  <header class="detalle__head">
+    <div>
+      <div class="detalle__chips">
+        <span class="chip chip--{{ prop.Operacion }}">{{ 'Venta' if prop.Operacion == 'venta' else 'Alquiler' }}</span>
+        <span class="chip chip--type">{{ prop.TipoNombre }}</span>
+        {% if prop.Destacada %}<span class="chip chip--star">Destacada</span>{% endif %}
+        {% if prop.Estado and prop.Estado != 'activo' %}<span class="chip chip--inactivo">Deshabilitado</span>{% endif %}
+      </div>
+      <h1>{{ prop.Titulo }}</h1>
+      <p class="detalle__loc">
+        {% if prop.Direccion %}{{ prop.Direccion }}, {% endif %}
+        {% if prop.Distrito %}{{ prop.Distrito }}, {% endif %}
+        {{ prop.Ciudad }}, {{ prop.Region }}
+      </p>
+    </div>
+    <div class="detalle__price">
+      <span class="detalle__price-amount">{{ prop.Precio|precio(prop.Moneda) }}</span>
+      {% if prop.Operacion == 'alquiler' %}<small>por mes</small>{% endif %}
+    </div>
+  </header>
+
+  <div class="gallery">
+    {% if imagenes %}
+      <div class="gallery__main">
+        <img id="galleryMain" src="{{ imagenes[0].Url }}" alt="{{ prop.Titulo }}" />
+      </div>
+      {% if imagenes|length > 1 %}
+        <div class="gallery__thumbs">
+          {% for img in imagenes %}
+            <button type="button" class="gallery__thumb {% if loop.first %}is-active{% endif %}" data-src="{{ img.Url }}">
+              <img src="{{ img.Url }}" alt="" loading="lazy" />
+            </button>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="gallery__placeholder">Sin imagenes</div>
+    {% endif %}
+  </div>
+
+  {% if videos %}
+  <section class="detalle-videos detalle-videos--glass">
+    <div class="detalle-videos__head">
+      <h2>Videos</h2>
+      <p class="detalle-videos__hint">Toca para ver en pantalla grande</p>
+    </div>
+    <div class="video-cards video-cards--glass">
+      {% for v in videos %}
+      {% set plat = v.Plataforma|lower %}
+      {% set yt_id = '' %}
+      {% if plat == 'youtube' and '/embed/' in v.UrlEmbed %}
+        {% set yt_id = v.UrlEmbed.split('/embed/')[1].split('?')[0] %}
+      {% endif %}
+      <button
+        type="button"
+        class="video-card video-card--glass video-card--{{ plat }}"
+        data-embed="{{ v.UrlEmbed }}"
+        data-original="{{ v.UrlOriginal }}"
+        data-platform="{{ plat }}"
+        data-label="Video en {{ v.Plataforma|capitalize }}"
+        aria-label="Reproducir video de {{ v.Plataforma }}"
+      >
+        <div class="video-card__glass">
+          <div class="video-card__media">
+            {% if yt_id %}
+              <img class="video-card__thumb" src="https://img.youtube.com/vi/{{ yt_id }}/hqdefault.jpg" alt="" loading="lazy" />
+            {% else %}
+              <div class="video-card__placeholder" aria-hidden="true"></div>
+            {% endif %}
+            <span class="video-card__ring" aria-hidden="true"></span>
+            <span class="video-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span class="video-card__badge">{{ v.Plataforma|capitalize }}</span>
+          </div>
+          <span class="video-card__cta">Reproducir</span>
+        </div>
+      </button>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div id="videoLightbox" class="video-lightbox" hidden role="dialog" aria-modal="true" aria-label="Reproductor de video">
+    <div class="video-lightbox__backdrop"></div>
+    <div class="video-lightbox__ambient" aria-hidden="true"></div>
+    <div class="video-lightbox__orb" aria-hidden="true"></div>
+
+    <div class="video-lightbox__shell">
+      <div class="video-lightbox__dialog video-lightbox__dialog--youtube">
+        <div class="video-lightbox__glass-panel">
+          <div class="video-lightbox__meta" id="videoLightboxMeta">
+            <span class="video-lightbox__pill" id="videoLightboxPlatform">Video</span>
+            <span class="video-lightbox__user" id="videoLightboxUser"></span>
+          </div>
+          <div class="video-lightbox__frame" id="videoLightboxFrame"></div>
+        </div>
+
+        <nav class="video-lightbox__nav" aria-label="Controles de video">
+          <button type="button" class="video-glass-btn video-lightbox__close" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+          <a class="video-glass-btn video-lightbox__external" id="videoLightboxExternal" href="#" target="_blank" rel="noopener noreferrer" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M14 3h7v7M10 14L21 3M21 14v7h-7M3 10V3h7"/></svg>
+            <span class="video-glass-btn__label" id="videoLightboxExternalLabel">Abrir</span>
+          </a>
+          <button type="button" class="video-glass-btn video-lightbox__fs" id="videoLightboxFs" aria-label="Pantalla completa">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="detalle__grid">
+    <div class="detalle__main">
+      <section class="card">
+        <h2>Caracteristicas</h2>
+        <ul class="specs-grid">
+          {% if prop.Habitaciones %}<li><strong>{{ prop.Habitaciones }}</strong><span>Habitaciones</span></li>{% endif %}
+          {% if prop.Banos %}<li><strong>{{ prop.Banos }}</strong><span>Banos</span></li>{% endif %}
+          {% if prop.Cocheras %}<li><strong>{{ prop.Cocheras }}</strong><span>Cocheras</span></li>{% endif %}
+          {% if prop.AreaTotal %}<li><strong>{{ prop.AreaTotal|int }}</strong><span>m2 totales</span></li>{% endif %}
+          {% if prop.AreaConstruida %}<li><strong>{{ prop.AreaConstruida|int }}</strong><span>m2 construidos</span></li>{% endif %}
+          <li><strong>{{ prop.Vistas }}</strong><span>Vistas</span></li>
+        </ul>
+      </section>
+
+      {% if prop.Descripcion %}
+      <section class="card">
+        <h2>Descripcion</h2>
+        <p class="descripcion">{{ prop.Descripcion }}</p>
+      </section>
+      {% endif %}
+
+      <section class="card">
+        <h2>Ubicacion</h2>
+        <p class="detalle__loc">
+          {% if prop.Direccion %}{{ prop.Direccion }}<br/>{% endif %}
+          {% if prop.Distrito %}{{ prop.Distrito }} - {% endif %}{{ prop.Ciudad }}, {{ prop.Region }}
+        </p>
+        {% if map_lat and map_lng %}
+          <div class="detalle-mapa-wrap masterplan-map">
+            <div id="mapa-detalle" class="mapa-canvas mapa-canvas--detalle" aria-label="Ubicacion en mapa"></div>
+            <aside id="loteInfoPanel" class="lote-panel lote-panel--view" hidden>
+              <button type="button" class="lote-panel__close" id="lotePanelClose" aria-label="Cerrar">×</button>
+              <span class="lote-panel__etapa" id="lotePanelEtapa"></span>
+              <p class="lote-panel__brand" id="lotePanelTitle">{{ prop.Titulo }}</p>
+              <h3 class="lote-panel__title" id="lotePanelSubtitle">Selecciona un lote</h3>
+              <div class="lote-panel__section">
+                <h4>Informacion</h4>
+                <dl class="lote-panel__dl">
+                  <div><dt>Tipologia</dt><dd id="lotePanelTipologia">—</dd></div>
+                  <div><dt>Area</dt><dd id="lotePanelArea">—</dd></div>
+                  <div><dt>Precio</dt><dd id="lotePanelPrecio">—</dd></div>
+                  <div><dt>Estado</dt><dd><span class="lote-panel__estado" id="lotePanelEstado">—</span></dd></div>
+                </dl>
+              </div>
+              <div class="lote-panel__section">
+                <h4>Perimetro (aprox.)</h4>
+                <div class="lote-panel__perimetro" id="lotePanelPerimetro"></div>
+              </div>
+              <div class="lote-panel__view-fields">
+                <h4>Datos del lote</h4>
+                <dl class="lote-panel__dl lote-panel__dl--meta">
+                  <div><dt>Etapa</dt><dd id="loteViewEtapa">—</dd></div>
+                  <div><dt>Manzana</dt><dd id="loteViewManzana">—</dd></div>
+                  <div><dt>Lote</dt><dd id="loteViewLote">—</dd></div>
+                </dl>
+              </div>
+            </aside>
+            <p class="lote-map-hint" id="loteMapHint" hidden>
+              <span id="loteMapHintText">Acerca el mapa para ver los lotes</span>
+            </p>
+          </div>
+          {% if prop.UtmZona %}
+          <div class="detalle-utm card">
+            <strong>Coordenadas UTM (centro del lote)</strong>
+            <span>Zona {{ prop.UtmZona }} · E {{ prop.UtmEste | int if prop.UtmEste else '—' }} · N {{ prop.UtmNorte | int if prop.UtmNorte else '—' }}</span>
+            {% if prop.AreaMapaM2 %}<span>Area en mapa: {{ prop.AreaMapaM2 | int }} m²</span>{% endif %}
+          </div>
+          {% endif %}
+          {% if prop.PlanMasterplan or prop.PoligonoLote %}
+            <p class="mapa-detalle-note plano-leyenda plano-leyenda--inline">
+              <span><i style="background:#22c55e"></i> Disponible</span>
+              <span><i style="background:#3b82f6"></i> Reservado</span>
+              <span><i style="background:#ef4444"></i> Vendido</span>
+              <span><i style="background:#64748b"></i> Calle</span>
+            </p>
+            <p class="mapa-detalle-note">Acerca el mapa para ver numeros de lote; al hacer zoom, clic en un lote muestra area, estado y medidas.</p>
+            {% if lotes_resumen %}
+            <div class="lotes-resumen card">
+              <h3>Disponibilidad de lotes</h3>
+              <div class="lotes-resumen__table-wrap">
+                <table class="lotes-resumen__table">
+                  <thead>
+                    <tr>
+                      <th>Etapa</th>
+                      <th>Mz</th>
+                      <th>Lt</th>
+                      <th>Tipologia</th>
+                      <th>Area</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for lt in lotes_resumen %}
+                    <tr>
+                      <td>{{ lt.etapa or '—' }}</td>
+                      <td>{{ lt.manzana or '—' }}</td>
+                      <td>{{ lt.lote or '—' }}</td>
+                      <td>{{ lt.tipologia or '—' }}</td>
+                      <td>{% if lt.area_m2 %}{{ lt.area_m2|int }} m²{% else %}—{% endif %}</td>
+                      <td><span class="lote-estado lote-estado--{{ lt.estado }}">{{ lt.estado_label }}</span></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endif %}
+          {% elif prop.TipoCodigo == 'terreno' and prop.Operacion == 'venta' %}
+            <p class="mapa-detalle-note"><i class="mapa-legend__lote"></i> Terreno en venta (area aproximada en naranja)</p>
+          {% else %}
+            <p class="mapa-detalle-note"><i class="mapa-legend__dot mapa-legend__dot--medio"></i> Ubicacion de la propiedad</p>
+          {% endif %}
+        {% endif %}
+        <a class="btn btn--ghost" target="_blank" rel="noopener"
+           href="https://www.google.com/maps?q={{ map_lat or prop.Latitud }},{{ map_lng or prop.Longitud }}">Abrir en Google Maps</a>
+      </section>
+    </div>
+
+    <aside class="detalle__side">
+      <div class="card card--agent">
+        <div class="agent">
+          <div class="agent__avatar">{{ prop.Anunciante[:1] }}</div>
+          <div>
+            <span class="agent__label">{% if prop.EsAgente %}Agente / Agencia{% else %}Anunciante{% endif %}</span>
+            <strong>
+              {% if prop.EsAgente %}
+                <a href="{{ url_for('main.agente', uid=prop.UsuarioId) }}">{{ prop.Anunciante }}</a>
+              {% else %}
+                {{ prop.Anunciante }}
+              {% endif %}
+            </strong>
+            {% if prop.AnuncianteTelefono %}<span>{{ prop.AnuncianteTelefono }}</span>{% endif %}
+          </div>
+        </div>
+
+        {% if not es_dueno and prop.AnuncianteTelefono %}
+          {% set wa_msg = 'Hola, me interesa "' ~ prop.Titulo ~ '". Vi el anuncio en ' ~ absolute_url() %}
+          {% set wa_link = prop.AnuncianteTelefono|whatsapp_url(wa_msg) %}
+          {% if wa_link %}
+          <a class="btn btn--whatsapp btn--block" href="{{ wa_link }}" target="_blank" rel="noopener noreferrer">
+            <svg class="btn-whatsapp__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Contactar por WhatsApp
+          </a>
+          {% endif %}
+        {% endif %}
+
+        <form method="post" class="form form--contact">
+          {{ form.hidden_tag() }}
+          {{ form_errors(form) }}
+          <label>Nombre {{ form.nombre(placeholder="Tu nombre") }}</label>
+          <label>Email {{ form.email(placeholder="tu@email.com") }}</label>
+          <label>Telefono {{ form.telefono(placeholder="Opcional") }}</label>
+          <label>Mensaje {{ form.mensaje(rows=4, placeholder="Hola, me interesa esta propiedad...") }}</label>
+          {{ form.submit(class_="btn btn--primary btn--block") }}
+        </form>
+
+        {% if es_dueno %}
+          <div class="owner-panel">
+            <p class="owner-panel__title">Tu anuncio</p>
+            <a class="btn btn--primary btn--block" href="{{ url_for('propiedades.editar', pid=prop.PropiedadId) }}">Editar publicacion</a>
+            <a class="btn btn--ghost btn--block" href="{{ url_for('propiedades.mis_anuncios') }}">Gestionar mis anuncios</a>
+            {% if prop.Estado == 'activo' %}
+              <form method="post" action="{{ url_for('propiedades.pausar', pid=prop.PropiedadId) }}">
+                <button class="btn btn--ghost btn--block" type="submit">Deshabilitar anuncio</button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('propiedades.activar', pid=prop.PropiedadId) }}">
+                <button class="btn btn--primary btn--block" type="submit">Reactivar anuncio</button>
+              </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('propiedades.eliminar', pid=prop.PropiedadId) }}"
+                  onsubmit="return confirm('Eliminar este anuncio de forma permanente?');">
+              <button class="btn btn--danger btn--block" type="submit">Eliminar anuncio</button>
+            </form>
+          </div>
+        {% elif current_user.is_authenticated %}
+          <form method="post" action="{{ url_for('main.toggle_favorito', pid=prop.PropiedadId) }}" class="fav-form">
+            <button class="btn btn--ghost btn--block {% if es_favorito %}is-fav{% endif %}" type="submit">
+              {% if es_favorito %}Quitar de favoritos{% else %}Guardar en favoritos{% endif %}
+            </button>
+          </form>
+        {% else %}
+          <a class="btn btn--ghost btn--block" href="{{ url_for('auth.login', next=request.path) }}">Inicia sesion para guardar</a>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+
+  {% if mas_del_anunciante %}
+  <section class="section-related card">
+    <div class="section__head">
+      <h2>Mas propiedades de este anunciante</h2>
+      {% if prop.EsAgente %}
+        <a class="link-more" href="{{ url_for('main.agente', uid=prop.UsuarioId) }}">Ver perfil completo &rarr;</a>
+      {% endif %}
+    </div>
+    <div class="grid-props grid-props--compact">
+      {% for p in mas_del_anunciante %}{{ card_propiedad(p) }}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block body_data %}
+data-prop-id="{{ prop.PropiedadId }}"
+data-prop-title="{{ prop.Titulo|e }}"
+data-prop-url="{{ url_for('main.detalle', pid=prop.PropiedadId) }}"
+data-prop-price="{{ prop.Precio|precio(prop.Moneda) }}"
+data-prop-loc="{% if prop.Distrito %}{{ prop.Distrito }}, {% endif %}{{ prop.Ciudad }}"
+{% if imagenes %}data-prop-img="{{ imagenes[0].Url }}"{% endif %}
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/analytics-lote.js') }}?v=1"></script>
+{% if map_lat and map_lng %}
+<script src="{{ url_for('static', filename='js/map-markers.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/plano-import.js') }}?v=27"></script>
+<script src="{{ url_for('static', filename='js/mapa.js') }}?v=21"></script>
+<script>
+  MPHMapa.initDetalle({
+    containerId: 'mapa-detalle',
+    lat: {{ map_lat }},
+    lng: {{ map_lng }},
+    titulo: {{ prop.Titulo | tojson }},
+    precio: {{ prop.Precio | tojson }},
+    moneda: {{ prop.Moneda | default('PEN') | tojson }},
+    esTerreno: {{ (prop.TipoCodigo == 'terreno' and prop.Operacion == 'venta') | tojson }},
+    mostrarLote: {{ (prop.PlanMasterplan or prop.PoligonoLote or (prop.TipoCodigo == 'terreno')) | tojson }},
+    areaTotal: {{ prop.AreaTotal or 250 }},
+    poligono: {{ prop.PoligonoLote | default(none) | tojson }},
+    planMasterplan: {{ prop.PlanMasterplan | default(none) | tojson }},
+    utmZona: {{ prop.UtmZona | default(none) | tojson }},
+    utmEste: {{ prop.UtmEste | default(none) | tojson }},
+    utmNorte: {{ prop.UtmNorte | default(none) | tojson }},
+    googleKey: {{ google_maps_key | tojson }}
+  });
+  document.querySelectorAll('.lotes-resumen__table tbody tr').forEach(function (tr) {
+    tr.style.cursor = 'pointer';
+    tr.title = 'Ver este lote en el mapa';
+    tr.addEventListener('click', function () {
+      var cells = tr.querySelectorAll('td');
+      if (cells.length < 3) return;
+      var etapa = cells[0].textContent.trim();
+      var mz = cells[1].textContent.trim();
+      var lt = cells[2].textContent.trim();
+      function norm(v) { return v === '—' ? '' : v; }
+      etapa = norm(etapa);
+      mz = norm(mz);
+      lt = norm(lt);
+      var trySelect = function () {
+        if (!window._mphDetallePlan || !window.MPHPlanoImport) return false;
+        var plan = window.MPHPlanoImport.getPlan();
+        if (!plan || !plan.features) return false;
+        var feat = plan.features.find(function (f) {
+          if (f.tipo === 'calle') return false;
+          var okE = !etapa || String(f.etapa || '') === etapa;
+          var okM = !mz || String(f.manzana || '').toUpperCase() === mz.toUpperCase();
+          var okL = !lt || String(f.lote || '') === lt || String(parseInt(f.lote, 10)) === String(parseInt(lt, 10));
+          return okE && okM && okL;
+        });
+        if (feat && window._mphDetallePlan.select) {
+          window._mphDetallePlan.select(feat.id);
+          document.getElementById('mapa-detalle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return true;
+        }
+        return false;
+      };
+      if (!trySelect()) setTimeout(trySelect, 600);
+    });
+  });
+</script>
+{% endif %}
+{% if videos %}
+<script src="{{ url_for('static', filename='js/video-lightbox.js') }}?v=5"></script>
+{% endif %}
+<script>
+  document.querySelectorAll('.gallery__thumb').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.gallery__thumb').forEach(function (b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      var main = document.getElementById('galleryMain');
+      if (main) main.src = btn.dataset.src;
+    });
+  });
+</script>
+{% endblock %}

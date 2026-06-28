@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Mis anuncios - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Mis anuncios</h1>
+    <p>Edita lotes vendidos/reservados, actualiza fotos, deshabilita o elimina publicaciones.</p>
+  </header>
+
+  <div class="mis-anuncios__toolbar">
+    <a class="btn btn--primary" href="{{ url_for('propiedades.publicar') }}">+ Nuevo anuncio</a>
+    <a class="btn btn--accent" href="{{ url_for('propiedades.compartir') }}">Compartir en mapa</a>
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.consultas') }}">
+      Consultas{% if total_consultas %} ({{ total_consultas }}){% endif %}
+    </a>
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.compartir_enlaces') }}">Mis enlaces</a>
+    <a class="btn btn--ghost" href="{{ url_for('auth.perfil') }}">Volver al perfil</a>
+  </div>
+
+  <p class="mis-anuncios__cuenta">Sesion: <strong>{{ current_user.email }}</strong></p>
+
+  {% if total_inactivos %}
+    <div class="mis-anuncios__aviso card">
+      <p>
+        Tienes <strong>{{ total_inactivos }}</strong> anuncio(s) <strong>deshabilitado(s)</strong>.
+        No aparecen en la busqueda publica ni en el mapa hasta que los reactives.
+      </p>
+      <form method="post" action="{{ url_for('propiedades.reactivar_todos') }}">
+        <button class="btn btn--primary btn--small" type="submit">Reactivar todos los deshabilitados</button>
+      </form>
+    </div>
+  {% endif %}
+
+  {% if anuncios %}
+    <div class="mis-anuncios-list">
+      {% for a in anuncios %}
+        <article class="mis-anuncio {% if a.Estado != 'activo' %}mis-anuncio--inactivo{% endif %}">
+          <a class="mis-anuncio__media" href="{{ url_for('main.detalle', pid=a.PropiedadId) }}">
+            {% if a.ImagenPrincipal %}
+              <img src="{{ a.ImagenPrincipal }}" alt="{{ a.Titulo }}" loading="lazy" />
+            {% else %}
+              <div class="mis-anuncio__placeholder">{{ a.TipoNombre[0] }}</div>
+            {% endif %}
+          </a>
+          <div class="mis-anuncio__body">
+            <div class="mis-anuncio__meta">
+              <span class="chip chip--{{ a.Operacion }}">{{ 'Venta' if a.Operacion == 'venta' else 'Alquiler' }}</span>
+              {% if a.Estado == 'activo' %}
+                <span class="chip chip--activo">Activo</span>
+              {% else %}
+                <span class="chip chip--inactivo">Deshabilitado</span>
+              {% endif %}
+            </div>
+            <h2><a href="{{ url_for('main.detalle', pid=a.PropiedadId) }}">{{ a.Titulo }}</a></h2>
+            <p class="mis-anuncio__loc">{{ a.TipoNombre }} en {{ a.Ciudad }}{% if a.Distrito %}, {{ a.Distrito }}{% endif %}</p>
+            <p class="mis-anuncio__price">{{ a.Precio|precio(a.Moneda) }}{% if a.Operacion == 'alquiler' %}<small>/mes</small>{% endif %}</p>
+            <p class="mis-anuncio__stats">{{ a.Vistas }} vistas</p>
+          </div>
+          <div class="mis-anuncio__actions">
+            <a class="btn btn--primary btn--small" href="{{ url_for('propiedades.editar', pid=a.PropiedadId) }}">Editar</a>
+            <a class="btn btn--ghost btn--small" href="{{ url_for('main.detalle', pid=a.PropiedadId) }}">Ver</a>
+            {% if a.Estado == 'activo' %}
+              <form method="post" action="{{ url_for('propiedades.pausar', pid=a.PropiedadId) }}">
+                <button class="btn btn--ghost btn--small" type="submit">Deshabilitar</button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('propiedades.activar', pid=a.PropiedadId) }}">
+                <button class="btn btn--primary btn--small" type="submit">Reactivar</button>
+              </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('propiedades.eliminar', pid=a.PropiedadId) }}"
+                  onsubmit="return confirm('Eliminar este anuncio de forma permanente?');">
+              <button class="btn btn--danger btn--small" type="submit">Eliminar</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Aun no tienes anuncios publicados.</p>
+      <a class="btn btn--primary" href="{{ url_for('propiedades.publicar') }}">Publicar mi primer anuncio</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

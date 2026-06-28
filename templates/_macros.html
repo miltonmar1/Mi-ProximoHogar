@@ -1,0 +1,221 @@
+{% macro google_logo(size=20) %}
+<svg class="google-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="{{ size }}" height="{{ size }}" aria-hidden="true" role="img">
+  <title>Google</title>
+  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+</svg>
+{% endmacro %}
+
+{% macro google_signin_button(label='Iniciar sesion con Google', href=None, enabled=true, next_url=None) %}
+  {% if enabled and href %}
+  <a class="btn-google btn-google--block" href="{{ href }}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+    <span class="btn-google__icon">{{ google_logo(22) }}</span>
+    <span class="btn-google__text">{{ label }}</span>
+  </a>
+  {% else %}
+  <span class="btn-google btn-google--block btn-google--disabled" aria-disabled="true" title="Configura GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en .env">
+    <span class="btn-google__icon">{{ google_logo(22) }}</span>
+    <span class="btn-google__text">{{ label }}</span>
+  </span>
+  <p class="btn-google__hint">Google OAuth no configurado en el servidor.</p>
+  {% endif %}
+{% endmacro %}
+
+{% macro filtro_precio_slider(filtros, rango) %}
+{% set vmin = filtros.precio_min if filtros.precio_min is not none else rango.min %}
+{% set vmax = filtros.precio_max if filtros.precio_max is not none else rango.max %}
+<div class="field field--price-slider">
+  <label>Precio (S/)</label>
+  <div class="price-slider"
+       data-floor="{{ rango.min }}"
+       data-ceiling="{{ rango.max }}"
+       data-step="{{ rango.step }}"
+       data-min="{{ vmin }}"
+       data-max="{{ vmax }}">
+    <div class="price-slider__labels">
+      <output class="price-slider__out price-slider__out--min"></output>
+      <output class="price-slider__out price-slider__out--max"></output>
+    </div>
+    <div class="price-slider__track-wrap">
+      <div class="price-slider__rail"></div>
+      <div class="price-slider__fill"></div>
+      <input type="range" class="price-slider__range price-slider__range--min"
+             min="{{ rango.min }}" max="{{ rango.max }}" step="{{ rango.step }}" value="{{ vmin }}" aria-label="Precio minimo" />
+      <input type="range" class="price-slider__range price-slider__range--max"
+             min="{{ rango.min }}" max="{{ rango.max }}" step="{{ rango.step }}" value="{{ vmax }}" aria-label="Precio maximo" />
+    </div>
+    <div class="price-slider__inputs">
+      <input type="number" name="precio_min" class="price-slider__num price-slider__num--min"
+             min="{{ rango.min }}" max="{{ rango.max }}" step="{{ rango.step }}"
+             value="{{ filtros.precio_min if filtros.precio_min is not none else '' }}"
+             placeholder="{{ rango.min }}" aria-label="Precio minimo en soles" />
+      <span class="price-slider__sep">—</span>
+      <input type="number" name="precio_max" class="price-slider__num price-slider__num--max"
+             min="{{ rango.min }}" max="{{ rango.max }}" step="{{ rango.step }}"
+             value="{{ filtros.precio_max if filtros.precio_max is not none else '' }}"
+             placeholder="{{ rango.max }}" aria-label="Precio maximo en soles" />
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro filtros_extra(filtros) %}
+<div class="field">
+  <label>Banos (min)</label>
+  <select name="banos_min">
+    <option value="">Cualquiera</option>
+    {% for n in [1,2,3,4] %}
+      <option value="{{ n }}" {% if filtros.banos_min == n %}selected{% endif %}>{{ n }}+</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="field">
+  <label>Area min (m2)</label>
+  <input type="number" name="area_min" min="0" step="1" value="{{ filtros.area_min if filtros.area_min is not none else '' }}" placeholder="Ej. 100" />
+</div>
+<div class="field">
+  <label>Area max (m2)</label>
+  <input type="number" name="area_max" min="0" step="1" value="{{ filtros.area_max if filtros.area_max is not none else '' }}" placeholder="Ej. 500" />
+</div>
+<div class="field field--checks">
+  <label class="check-inline">
+    <input type="checkbox" name="solo_terreno" value="1" {% if filtros.solo_terreno %}checked{% endif %} />
+    Solo terrenos
+  </label>
+  <label class="check-inline">
+    <input type="checkbox" name="con_plano" value="1" {% if filtros.con_plano %}checked{% endif %} />
+    Con plano / masterplan
+  </label>
+</div>
+{% endmacro %}
+
+{% macro card_propiedad(p) %}
+{% set pt = p|precio_tarjeta %}
+{% set op_label = 'Venta' if p.Operacion == 'venta' else 'Alquiler' %}
+{% set wa_msg = 'Hola, me interesa "' ~ p.Titulo ~ '". Vi el anuncio en Mi Proximo Hogar.' %}
+{% set wa_link = p.AnuncianteTelefono|whatsapp_url(wa_msg) if p.AnuncianteTelefono else none %}
+{% set area = p.AreaTotal or p.AreaConstruida %}
+{% set area_n = area|float if area else 0 %}
+{% set precio_n = pt.precio|float if pt.precio else 0 %}
+{% set precio_m2 = ((precio_n / area_n)|round(0)|int) if area_n > 0 and precio_n > 0 else none %}
+<article class="card-prop card-prop--rich {% if p.Destacada %}is-destacada{% endif %}">
+  <div class="card-prop__head">
+    {% if p.FechaCreacion %}<time class="card-prop__date" datetime="{{ p.FechaCreacion }}">{{ p.FechaCreacion|fecha }}</time>{% endif %}
+  </div>
+  <a class="card-prop__media" href="{{ url_for('main.detalle', pid=p.PropiedadId) }}">
+    {% if p.ImagenPrincipal %}
+      <img src="{{ p.ImagenPrincipal }}" alt="{{ p.Titulo }}" loading="lazy" />
+    {% else %}
+      <div class="card-prop__placeholder">{{ p.TipoNombre[0] }}</div>
+    {% endif %}
+    <span class="chip chip--{{ p.Operacion }}">{{ op_label }}</span>
+    {% if p.Destacada %}<span class="chip chip--star">Destacada</span>{% endif %}
+  </a>
+  <div class="card-prop__body">
+    <h3 class="card-prop__title">
+      <a href="{{ url_for('main.detalle', pid=p.PropiedadId) }}">
+        <span class="card-prop__title-line">
+          <span class="card-prop__title-type">{{ p.TipoNombre }}</span>
+          <span class="card-prop__title-sep">en {{ p.Ciudad }}</span>
+        </span>
+        <span class="card-prop__title-main">{{ p.Titulo }}</span>
+      </a>
+    </h3>
+    <div class="card-prop__price{% if pt.desde %} card-prop__price--desde{% endif %}">
+      {% if pt.desde %}<span class="card-prop__desde">Desde</span>{% endif %}
+      {{ pt.precio|precio(pt.moneda) }}{% if p.Operacion == 'alquiler' %}<small>/mes</small>{% endif %}
+    </div>
+    <p class="card-prop__loc">
+      <svg class="card-prop__pin" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>
+      {% if p.Distrito %}{{ p.Distrito }}, {% endif %}{{ p.Ciudad }}{% if p.Region %}, {{ p.Region }}{% endif %}
+    </p>
+    <ul class="card-prop__facts">
+      {% if p.Habitaciones %}
+      <li class="card-prop__fact" title="Habitaciones">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm10-6H9v7H5v9h2v-4h10v4h2v-9h-4V8z"/></svg>
+        <span>{{ p.Habitaciones }} dorm</span>
+      </li>
+      {% endif %}
+      {% if p.Banos %}
+      <li class="card-prop__fact" title="Banos">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M9 2c-1.1 0-2 .9-2 2v2H5a2 2 0 0 0-2 2v2h18v-2a2 2 0 0 0-2-2h-2V4c0-1.1-.9-2-2-2H9zm0 2h6v2H9V4zM5 12v8h14v-8H5z"/></svg>
+        <span>{{ p.Banos }} banos</span>
+      </li>
+      {% endif %}
+      {% if area %}
+      <li class="card-prop__fact" title="Area">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm13 0h3v3h-3v-3zm-3 3h3v5h-3v-5zm3 3h3v3h-3v-3z"/></svg>
+        <span>{{ area|int }} m2</span>
+      </li>
+      {% endif %}
+      {% if p.Cocheras %}
+      <li class="card-prop__fact" title="Cocheras">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M5 11h14v2H5v-2zm2-7h10l2 4H5l2-4zm-1 6h12l1 8H5l1-8z"/></svg>
+        <span>{{ p.Cocheras }} coch.</span>
+      </li>
+      {% endif %}
+      {% if precio_m2 %}
+      <li class="card-prop__fact" title="Precio por m2">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-4H8v-2h3V9h2v4h3v2h-3v4z"/></svg>
+        <span>{{ precio_m2|precio(pt.moneda) }}/m2</span>
+      </li>
+      {% endif %}
+      {% if p.Vistas %}
+      <li class="card-prop__fact" title="Vistas">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8A3 3 0 1 0 12 15a3 3 0 0 0 0-6z"/></svg>
+        <span>{{ p.Vistas }} vistas</span>
+      </li>
+      {% endif %}
+    </ul>
+    <div class="card-prop__actions">
+      {% if wa_link %}
+      <a class="card-prop__wa" href="{{ wa_link }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </a>
+      {% endif %}
+      <a class="card-prop__contact" href="{{ url_for('main.detalle', pid=p.PropiedadId) }}">Contactar</a>
+    </div>
+  </div>
+</article>
+{% endmacro %}
+
+{% macro categoria_icon(codigo) %}
+  {% set c = (codigo or '')|lower %}
+  <svg class="cat-orbit__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    {% if c == 'casa' %}
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"/>
+    {% elif c == 'departamento' %}
+      <rect x="5" y="3" width="14" height="18" rx="1.5"/>
+      <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>
+    {% elif c == 'terreno' or c == 'lote' %}
+      <path d="M4 8 12 3l8 5v13H4V8z"/>
+      <path d="M8 12h8M8 16h5"/>
+    {% elif c == 'local' %}
+      <path d="M4 9h16v11H4z"/>
+      <path d="M4 9l2-4h12l2 4M9 14h6"/>
+    {% elif c == 'oficina' %}
+      <rect x="3" y="7" width="18" height="13" rx="1"/>
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M8 12h8"/>
+    {% elif c == 'industrial' or c == 'deposito' %}
+      <path d="M3 10h18l-2 10H5L3 10z"/>
+      <path d="M8 10V6h8v4"/>
+    {% elif c == 'cuarto' or c == 'habitacion' %}
+      <rect x="4" y="5" width="16" height="14" rx="2"/>
+      <path d="M4 12h16M12 5v14"/>
+    {% else %}
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M12 8v8M8 12h8"/>
+    {% endif %}
+  </svg>
+{% endmacro %}
+
+{% macro form_errors(form) %}
+  {% for field in form if field.errors %}
+    {% for error in field.errors %}
+      <div class="form-error"><strong>{{ field.label.text }}:</strong> {{ error }}</div>
+    {% endfor %}
+  {% endfor %}
+{% endmacro %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card_propiedad, filtro_precio_slider, filtros_extra %}
+
+{% block title %}{{ landing.titulo }} - {{ marca }}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{{ landing.meta }}" />
+{% endblock %}
+
+{% block og_title %}{{ landing.titulo }} - {{ marca }}{% endblock %}
+{% block og_description %}{{ landing.meta }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow page-listing landing-terrenos">
+  <header class="page-head page-head--left">
+    <nav class="breadcrumb">
+      <a href="{{ url_for('main.index') }}">Inicio</a> /
+      <a href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta') }}">Terrenos</a> /
+      <span>{{ landing.titulo }}</span>
+    </nav>
+    <h1>{{ landing.titulo }}</h1>
+    <p class="landing-terrenos__intro">{{ landing.meta }}</p>
+    <p>{{ resultado.total }} terreno(s) encontrado(s)</p>
+  </header>
+
+  <nav class="landing-terrenos__nav" aria-label="Zonas en Cusco">
+    <a class="chip {% if slug == 'cusco' %}is-active{% endif %}" href="{{ url_for('main.landing_terrenos', slug='cusco') }}">Cusco</a>
+    <a class="chip {% if slug == 'san-jeronimo' %}is-active{% endif %}" href="{{ url_for('main.landing_terrenos', slug='san-jeronimo') }}">San Jeronimo</a>
+    <a class="chip {% if slug == 'wanchaq' %}is-active{% endif %}" href="{{ url_for('main.landing_terrenos', slug='wanchaq') }}">Wanchaq</a>
+    <a class="chip {% if slug == 'santiago' %}is-active{% endif %}" href="{{ url_for('main.landing_terrenos', slug='santiago') }}">Santiago</a>
+    <a class="chip {% if slug == 'san-blas' %}is-active{% endif %}" href="{{ url_for('main.landing_terrenos', slug='san-blas') }}">San Blas</a>
+  </nav>
+
+  <form class="filters filters--clean" method="get" action="{{ url_for('main.landing_terrenos', slug=slug) }}">
+    <div class="filters__row">
+      {{ filtro_precio_slider(filtros, rango_precios) }}
+      <div class="field">
+        <label>Area min (m2)</label>
+        <input type="number" name="area_min" min="0" value="{{ filtros.area_min if filtros.area_min is not none else '' }}" />
+      </div>
+      <div class="field">
+        <label>Area max (m2)</label>
+        <input type="number" name="area_max" min="0" value="{{ filtros.area_max if filtros.area_max is not none else '' }}" />
+      </div>
+      <div class="field field--checks">
+        <label class="check-inline">
+          <input type="checkbox" name="con_plano" value="1" {% if filtros.con_plano %}checked{% endif %} />
+          Con plano / masterplan
+        </label>
+      </div>
+      <div class="field field--actions">
+        <button class="btn btn--primary" type="submit">Filtrar</button>
+        <a class="btn btn--ghost" href="{{ url_for('main.mapa', tipo='terreno', operacion='venta', ciudad_id=filtros.ciudad_id) }}">Ver en mapa</a>
+      </div>
+    </div>
+  </form>
+
+  {% if resultado.propiedades %}
+    <div class="grid-props">
+      {% for p in resultado.propiedades %}{{ card_propiedad(p) }}{% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay terrenos con estos filtros en esta zona. Prueba ampliar el area o el precio.</p>
+      <a class="btn btn--primary" href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta') }}">Ver todos los terrenos</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}404 - {{ marca }}{% endblock %}
+{% block content %}
+<section class="section error-page">
+  <div class="error-code">404</div>
+  <h1>Pagina no encontrada</h1>
+  <p>La direccion que buscas se perdio en el ciberespacio.</p>
+  <a class="btn btn--primary" href="{{ url_for('main.index') }}">Volver al inicio</a>
+</section>
+{% endblock %}

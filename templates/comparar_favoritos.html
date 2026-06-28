@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Comparar favoritos - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Comparar favoritos</h1>
+    <p>Hasta 6 propiedades guardadas lado a lado.</p>
+  </header>
+
+  {% if items|length < 2 %}
+    <div class="empty-state">
+      <p>Selecciona al menos 2 favoritos desde <a href="{{ url_for('main.favoritos') }}">Mis favoritos</a>.</p>
+    </div>
+  {% else %}
+    <div class="compare-table-wrap card">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th></th>
+            {% for p in items %}
+              <th>
+                <a href="{{ url_for('main.detalle', pid=p.PropiedadId) }}">{{ p.Titulo }}</a>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>Precio</th>
+            {% for p in items %}
+              <td>{{ p.Precio|precio(p.Moneda) }}{% if p.Operacion == 'alquiler' %}<small>/mes</small>{% endif %}</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <th>Operacion</th>
+            {% for p in items %}<td>{{ 'Venta' if p.Operacion == 'venta' else 'Alquiler' }}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th>Tipo</th>
+            {% for p in items %}<td>{{ p.TipoNombre }}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th>Ubicacion</th>
+            {% for p in items %}
+              <td>{% if p.Distrito %}{{ p.Distrito }}, {% endif %}{{ p.Ciudad }}</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <th>Habitaciones</th>
+            {% for p in items %}<td>{{ p.Habitaciones or '—' }}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th>Banos</th>
+            {% for p in items %}<td>{{ p.Banos or '—' }}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th>Area total</th>
+            {% for p in items %}<td>{% if p.AreaTotal %}{{ p.AreaTotal|int }} m2{% else %}—{% endif %}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th></th>
+            {% for p in items %}
+              <td><a class="btn btn--primary btn--small" href="{{ url_for('main.detalle', pid=p.PropiedadId) }}">Ver detalle</a></td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <p class="compare-back"><a href="{{ url_for('main.favoritos') }}">&larr; Volver a favoritos</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card_propiedad %}
+
+{% block title %}Mis favoritos - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Mis favoritos</h1>
+    <p>Propiedades que guardaste para ver despues.</p>
+  </header>
+
+  {% if items %}
+    <form id="favCompareForm" class="fav-compare-bar" method="get" action="{{ url_for('main.comparar_favoritos') }}">
+      <p>Marca 2 a 6 propiedades para comparar:</p>
+      <button class="btn btn--primary btn--small" type="submit" id="favCompareBtn" disabled>Comparar seleccionadas</button>
+    </form>
+    <div class="grid-props fav-grid">
+      {% for p in items %}
+        <div class="fav-card-wrap">
+          <label class="fav-compare-check">
+            <input type="checkbox" name="ids" value="{{ p.PropiedadId }}" form="favCompareForm" class="fav-compare-input" />
+            <span>Comparar</span>
+          </label>
+          {{ card_propiedad(p) }}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Aun no tienes favoritos</h3>
+      <p>Cuando guardes propiedades, apareceran aqui para que las revises facilmente.</p>
+      <a class="btn btn--primary" href="{{ url_for('main.propiedades') }}">Explorar propiedades</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+  (function () {
+    var inputs = document.querySelectorAll('.fav-compare-input');
+    var btn = document.getElementById('favCompareBtn');
+    var form = document.getElementById('favCompareForm');
+    if (!inputs.length || !btn || !form) return;
+    function sync() {
+      var n = document.querySelectorAll('.fav-compare-input:checked').length;
+      btn.disabled = n < 2 || n > 6;
+    }
+    inputs.forEach(function (el) { el.addEventListener('change', sync); });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ids = Array.prototype.map.call(
+        document.querySelectorAll('.fav-compare-input:checked'),
+        function (c) { return c.value; }
+      );
+      if (ids.length < 2) return;
+      window.location.href = form.action + '?ids=' + ids.join(',');
+    });
+  })();
+</script>
+{% endblock %}

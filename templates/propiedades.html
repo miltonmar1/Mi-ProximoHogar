@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card_propiedad, filtro_precio_slider, filtros_extra %}
+
+{% block title %}Propiedades - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow page-listing">
+  <header class="page-head page-head--left">
+    <h1>Resultados de busqueda</h1>
+    <p>{{ resultado.total }} propiedades encontradas</p>
+  </header>
+
+  <form class="filters filters--clean" method="get" action="{{ url_for('main.propiedades') }}">
+    <div class="filters__row">
+      <div class="field">
+        <label>Operacion</label>
+        <select name="operacion">
+          <option value="">Todas</option>
+          <option value="venta"    {% if filtros.operacion == 'venta' %}selected{% endif %}>Venta</option>
+          <option value="alquiler" {% if filtros.operacion == 'alquiler' %}selected{% endif %}>Alquiler</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <select name="tipo">
+          <option value="">Cualquiera</option>
+          {% for t in tipos %}
+            <option value="{{ t.Codigo }}" {% if filtros.tipo == t.Codigo %}selected{% endif %}>{{ t.Nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Ciudad</label>
+        <select name="ciudad_id">
+          <option value="">Todas</option>
+          {% for c in ciudades %}
+            <option value="{{ c.CiudadId }}" {% if filtros.ciudad_id == c.CiudadId %}selected{% endif %}>{{ c.Nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Habitaciones (min)</label>
+        <select name="habitaciones_min">
+          <option value="">Cualquiera</option>
+          {% for n in [1,2,3,4,5] %}
+            <option value="{{ n }}" {% if filtros.habitaciones_min == n %}selected{% endif %}>{{ n }}+</option>
+          {% endfor %}
+        </select>
+      </div>
+      {{ filtros_extra(filtros) }}
+      {{ filtro_precio_slider(filtros, rango_precios) }}
+      <div class="field field--grow">
+        <label>Texto libre</label>
+        <input type="text" name="q" value="{{ filtros.texto or '' }}" placeholder="Ubicacion, piscina, vista al mar..." class="mph-autocomplete" autocomplete="off" data-autocomplete-url="{{ url_for('api.autocomplete') }}" />
+      </div>
+      <div class="field">
+        <label>Ordenar</label>
+        <select name="orden">
+          <option value="recientes"   {% if filtros.orden == 'recientes' %}selected{% endif %}>Mas recientes</option>
+          <option value="precio_asc"  {% if filtros.orden == 'precio_asc' %}selected{% endif %}>Precio: menor a mayor</option>
+          <option value="precio_desc" {% if filtros.orden == 'precio_desc' %}selected{% endif %}>Precio: mayor a menor</option>
+          <option value="destacadas"  {% if filtros.orden == 'destacadas' %}selected{% endif %}>Destacadas primero</option>
+        </select>
+      </div>
+      <div class="field field--actions">
+        <button class="btn btn--primary" type="submit">Buscar</button>
+        <a class="btn btn--ghost" href="{{ url_for('main.propiedades') }}">Limpiar</a>
+        <a class="btn btn--ghost" href="{{ url_for('main.mapa', **request.args) }}">Mapa</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="mapa-embed card">
+    <div class="mapa-embed__head">
+      <h2>Mapa Cusco</h2>
+      <button type="button" class="btn btn--ghost btn--small" id="btnMiUbicacion">Cerca de mi</button>
+    </div>
+    <div class="mapa-toolbar mapa-toolbar--compact">
+      <button type="button" class="mapa-tipo-btn" data-tipo="roadmap">Mapa</button>
+      <button type="button" class="mapa-tipo-btn is-active" data-tipo="satellite">Satelite</button>
+    </div>
+    <div id="mapa-listado" class="mapa-canvas mapa-canvas--embed"></div>
+  </div>
+
+  {% if resultado.propiedades %}
+    <div class="grid-props grid-props--listing">
+      {% for p in resultado.propiedades %}{{ card_propiedad(p) }}{% endfor %}
+    </div>
+
+    {% if resultado.paginas > 1 %}
+      <nav class="pager">
+        {% set base_args = request.args.to_dict() %}
+        {% for n in range(1, resultado.paginas + 1) %}
+          {% set _ = base_args.update({'pagina': n}) %}
+          <a class="pager__btn {% if n == resultado.pagina %}is-active{% endif %}"
+             href="{{ url_for('main.propiedades', **base_args) }}">{{ n }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <h3>No encontramos propiedades con esos filtros</h3>
+      <p>Prueba ajustando la busqueda o explora todas las propiedades disponibles.</p>
+      <a class="btn btn--primary" href="{{ url_for('main.propiedades') }}">Ver todas</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/price-slider.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mapa.js') }}?v=17"></script>
+<script>
+  MPHMapa.init({
+    containerId: 'mapa-listado',
+    apiUrl: '{{ url_for("api.mapa") }}',
+    detalleBase: '{{ url_for("main.detalle", pid=0) }}'.replace('/0', ''),
+    query: {{ request.args.to_dict() | tojson }},
+    googleKey: {{ google_maps_key | tojson }},
+    center: [{{ map_center_lat }}, {{ map_center_lng }}],
+    zoom: {{ map_zoom }},
+    autoCiudadFilter: false,
+    maxBounds: [[-18.5, -84.5], [-0.5, -68.5]]
+  });
+</script>
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}?v=3"></script>
+{% endblock %}

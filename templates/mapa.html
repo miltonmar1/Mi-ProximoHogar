@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% from "_macros.html" import filtro_precio_slider, filtros_extra %}
+
+{% block title %}Mapa de propiedades - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow page-mapa">
+  <header class="page-head page-head--left">
+    <h1>Mapa de propiedades</h1>
+    <p>Todas las publicaciones activas con ubicacion. Mantén pulsado para Street View. Icono naranja = terreno / lote.</p>
+  </header>
+
+  {% if not google_maps_key %}
+  <div class="mapa-aviso mapa-aviso--warn">
+    Configura <code>GOOGLE_MAPS_API_KEY</code> en tu archivo <code>.env</code> y habilita <strong>Maps JavaScript API</strong> en Google Cloud.
+  </div>
+  {% else %}
+  <details class="mapa-setup-hint">
+    <summary>Si el mapa no carga (checklist Google Cloud)</summary>
+    <ol>
+      <li><a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com" target="_blank" rel="noopener">Habilitar Maps JavaScript API</a></li>
+      <li>Clave <strong>WEB miproximohogar</strong> → Restricciones de API → agregar <strong>Maps JavaScript API</strong> (las 22 actuales son BigQuery, no sirven para el mapa)</li>
+      <li>Sitios web: <code>http://127.0.0.1:5000/*</code> y <code>http://localhost:5000/*</code></li>
+      <li><a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Facturacion</a> activa (quita el texto &quot;For development purposes only&quot;)</li>
+      <li>Guardar, esperar 2 min, reiniciar Flask y recargar con Ctrl+F5</li>
+    </ol>
+  </details>
+  {% endif %}
+
+  <form class="filters filters--clean mapa-filters" id="mapaFiltersForm" method="get" action="{{ url_for('main.mapa') }}">
+    <div class="filters__row">
+      <div class="field">
+        <label>Operacion</label>
+        <select name="operacion">
+          <option value="">Todas</option>
+          <option value="venta" {% if filtros.operacion == 'venta' %}selected{% endif %}>Venta</option>
+          <option value="alquiler" {% if filtros.operacion == 'alquiler' %}selected{% endif %}>Alquiler</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <select name="tipo">
+          <option value="">Cualquiera</option>
+          {% for t in tipos %}
+            <option value="{{ t.Codigo }}" {% if filtros.tipo == t.Codigo %}selected{% endif %}>{{ t.Nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Ciudad</label>
+        <select name="ciudad_id">
+          <option value="">Todas las ciudades</option>
+          {% for c in ciudades %}
+            <option value="{{ c.CiudadId }}" {% if filtros.ciudad_id == c.CiudadId %}selected{% endif %}>{{ c.Nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {{ filtros_extra(filtros) }}
+      {{ filtro_precio_slider(filtros, rango_precios) }}
+      <div class="field field--grow">
+        <label>Buscar</label>
+        <input type="text" name="q" value="{{ filtros.texto or '' }}" placeholder="Distrito, direccion..." class="mph-autocomplete" autocomplete="off" data-autocomplete-url="{{ url_for('api.autocomplete') }}" />
+      </div>
+      <div class="field field--actions">
+        <button class="btn btn--primary" type="submit">Actualizar mapa</button>
+        <a class="btn btn--ghost" href="{{ url_for('main.mapa', tipo='terreno', operacion='venta') }}">Solo terrenos</a>
+        <a class="btn btn--ghost" href="{{ url_for('main.mapa') }}">Limpiar</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="mapa-layout">
+    <div class="mapa-panel">
+      <div class="mapa-toolbar">
+        <div class="mapa-toolbar__tipos">
+          <button type="button" class="mapa-tipo-btn" data-tipo="roadmap">Mapa</button>
+          <button type="button" class="mapa-tipo-btn" data-tipo="satellite">Satelite</button>
+          <button type="button" class="mapa-tipo-btn is-active" data-tipo="hybrid">Con nombres</button>
+        </div>
+        <button type="button" class="btn btn--primary btn--small" id="btnMiUbicacion">Cerca de mi</button>
+      </div>
+      <div id="mapaAviso" class="mapa-aviso" hidden></div>
+      <div class="mapa-viewport" id="mapaViewport">
+        <div id="mapa-propiedades" class="mapa-canvas" aria-label="Mapa interactivo de propiedades"></div>
+        <div id="mapa-streetview" class="mapa-streetview" aria-label="Vista de calle Google Street View"></div>
+        <button type="button" class="mapa-sv-close" id="btnCerrarStreetView" hidden aria-label="Cerrar vista calle">&times;</button>
+      </div>
+      <p class="mapa-hint">
+        <strong>Mantén pulsado</strong> el mapa (o clic derecho) para ver la calle en 360°.
+        Usa el muñeco amarillo o <strong>Con nombres</strong> para ver calles sobre el satelite.
+      </p>
+      <div class="mapa-legend">
+        <span class="mapa-legend__item"><i class="mapa-legend__dot mapa-legend__dot--barato"></i> Punto: mas barato</span>
+        <span class="mapa-legend__item"><i class="mapa-legend__dot mapa-legend__dot--medio"></i> Punto: precio medio</span>
+        <span class="mapa-legend__item"><i class="mapa-legend__dot mapa-legend__dot--caro"></i> Punto: mas caro</span>
+        <span class="mapa-legend__item"><i class="mapa-legend__lote"></i> Terreno / lote</span>
+        <span class="mapa-legend__item"><i class="mapa-legend__ring"></i> Radio 8 km</span>
+      </div>
+    </div>
+    <aside class="mapa-sidebar card" id="mapaSidebar">
+      <h2>Cerca de ti</h2>
+      <div id="mapaSidebarContent" class="mapa-sidebar__content">
+        <p class="mapa-sidebar__hint">Pulsa <strong>Cerca de mi</strong> para ver lotes alrededor y avisos si hay mas lejos.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/price-slider.js') }}"></script>
+<script src="{{ url_for('static', filename='js/map-markers.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/plano-import.js') }}?v=23"></script>
+<script src="{{ url_for('static', filename='js/mapa.js') }}?v=22"></script>
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}?v=3"></script>
+<script>
+  MPHMapa.init({
+    containerId: 'mapa-propiedades',
+    apiUrl: '{{ url_for("api.mapa") }}',
+    detalleBase: '{{ url_for("main.detalle", pid=0) }}'.replace('/0', ''),
+    query: {{ request.args.to_dict() | tojson }},
+    sidebarId: 'mapaSidebarContent',
+    avisoId: 'mapaAviso',
+    googleKey: {{ google_maps_key | tojson }},
+    center: [{{ map_center_lat }}, {{ map_center_lng }}],
+    zoom: {{ map_zoom }},
+    autoCiudadFilter: false,
+    maxBounds: [[-18.5, -84.5], [-0.5, -68.5]],
+    autoLocate: false,
+    destacar: {{ destacar | tojson }}
+  });
+
+  (function () {
+    var form = document.getElementById('mapaFiltersForm');
+    if (!form || !window.MPHMapa || !MPHMapa.reloadQuery) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fd = new FormData(form);
+      var q = {};
+      fd.forEach(function (val, key) {
+        if (val !== '' && val != null) q[key] = val;
+      });
+      ['solo_terreno', 'con_plano'].forEach(function (name) {
+        if (!form.querySelector('[name="' + name + '"]:checked')) delete q[name];
+      });
+      MPHMapa.reloadQuery(q);
+      var params = new URLSearchParams(q);
+      var qs = params.toString();
+      history.replaceState(null, '', qs ? ('?' + qs) : window.location.pathname);
+    });
+  })();
+</script>
+{% endblock %}

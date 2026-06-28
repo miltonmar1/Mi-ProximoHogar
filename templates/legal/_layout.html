@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section section--narrow legal">
+  <nav class="breadcrumb">
+    <a href="{{ url_for('main.index') }}">Inicio</a> /
+    <span>{{ page_title }}</span>
+  </nav>
+  <article class="card legal__body">
+    <h1>{{ page_title }}</h1>
+    <p class="legal__updated">Ultima actualizacion: junio 2026 &middot; Ley N.° 29733 (Peru)</p>
+    {% block legal_content %}{% endblock %}
+  </article>
+</section>
+{% endblock %}

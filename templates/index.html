@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% from "_macros.html" import card_propiedad, categoria_icon %}
+
+
+
+{% block body_class %} page-home{% endblock %}
+
+
+
+{% block content %}
+
+
+
+<section class="hero hero--cover hero--fullscreen">
+
+  <div class="hero__bg" aria-hidden="true"></div>
+
+  <div class="hero__overlay" aria-hidden="true"></div>
+
+  <div class="hero__center">
+
+    <h1>La llave al <span class="hl-clean">espacio que buscas</span></h1>
+
+    <form class="search-card search-card--clean" method="get" action="{{ url_for('main.propiedades') }}">
+
+      <div class="search-tabs search-tabs--clean" role="tablist">
+
+        <label class="search-tab">
+
+          <input type="radio" name="operacion" value="alquiler" checked>
+
+          <span>Alquilar</span>
+
+        </label>
+
+        <label class="search-tab">
+
+          <input type="radio" name="operacion" value="venta">
+
+          <span>Comprar</span>
+
+        </label>
+
+      </div>
+
+      <div class="search-fields search-fields--clean">
+
+        <div class="field">
+
+          <select name="tipo" aria-label="Tipo de propiedad">
+
+            <option value="">Tipo de propiedad</option>
+
+            {% for t in tipos %}
+
+              <option value="{{ t.Codigo }}">{{ t.Nombre }}</option>
+
+            {% endfor %}
+
+          </select>
+
+        </div>
+
+        <div class="field field--grow">
+
+          <input type="text" name="q" placeholder="Busca por ciudad, distrito o zona..." class="mph-autocomplete" autocomplete="off" data-autocomplete-url="{{ url_for('api.autocomplete') }}" />
+
+        </div>
+
+        <button class="btn btn--primary search-submit" type="submit">Buscar</button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+  <div class="hero__orbit section section--cat-orbit" aria-labelledby="catOrbitTitle">
+    <div class="cat-orbit-layout">
+      <div class="cat-orbit-layout__copy">
+        <span class="badge-2050 badge-2050--hero">Navegacion moderna</span>
+        <h2 id="catOrbitTitle">Explora por <span class="hl-clean">categoria</span></h2>
+        <p>
+          Los tipos de inmueble giran en orbita. Pasa el cursor para pausar y haz clic en un circulo
+          para ver propiedades en venta o alquiler.
+        </p>
+        <a class="btn btn--primary" href="{{ url_for('main.propiedades') }}">Ver todas las propiedades</a>
+      </div>
+
+      <div class="cat-orbit-wrap" style="--n: {{ categorias|length or 6 }};">
+        <div class="cat-orbit__decor" aria-hidden="true">
+          <div class="cat-orbit__ring cat-orbit__ring--outer"></div>
+          <div class="cat-orbit__ring cat-orbit__ring--inner"></div>
+          <div class="cat-orbit__glow"></div>
+        </div>
+
+        <div class="cat-orbit__hub" aria-hidden="true">
+          <span class="cat-orbit__hub-label">Explorar</span>
+          <span class="cat-orbit__hub-sub">{{ categorias|length }} tipos</span>
+        </div>
+
+        <div class="cat-orbit__stage" role="list">
+          {% for c in categorias %}
+          <a
+            class="cat-orbit__item"
+            role="listitem"
+            href="{{ url_for('main.propiedades', tipo=c.Codigo) }}"
+            style="--i: {{ loop.index0 }};"
+            title="{{ c.Nombre }} — {{ c.Total }} propiedades"
+          >
+            <span class="cat-orbit__bubble">
+              {{ categoria_icon(c.Codigo) }}
+            </span>
+            <span class="cat-orbit__name">{{ c.Nombre }}</span>
+            <span class="cat-orbit__count">{{ c.Total }} prop.</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+
+<section class="section section--terreno-hub">
+
+  <div class="terreno-hub__banner" aria-hidden="true">
+    <p>Terrenos y lotes en todo el <strong>Peru</strong> — mapa interactivo, planos y contacto directo con anunciantes.</p>
+  </div>
+
+  <h2 class="terreno-hub__title">Listado de terrenos que te pueden interesar</h2>
+
+  <div class="terreno-hub__track" role="list">
+
+    <a
+      class="terreno-hub__card"
+      role="listitem"
+      href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta') }}"
+    >
+      <span class="terreno-hub__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </span>
+      <h3>Terrenos en venta</h3>
+      <p>Lotes listos para construir con servicios basicos, areas urbanas y zonas de expansion.</p>
+    </a>
+
+    <a
+      class="terreno-hub__card"
+      role="listitem"
+      href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta', q='financiamiento') }}"
+    >
+      <span class="terreno-hub__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </span>
+      <h3>Lotes con financiamiento</h3>
+      <p>Cuotas flexibles y opciones de pago directo con el propietario o la inmobiliaria.</p>
+    </a>
+
+    <a
+      class="terreno-hub__card"
+      role="listitem"
+      href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta', q='pre venta') }}"
+    >
+      <span class="terreno-hub__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </span>
+      <h3>En pre-venta</h3>
+      <p>Proyectos de lotes antes de la entrega. Reserva tu terreno desde el lanzamiento.</p>
+    </a>
+
+    <a
+      class="terreno-hub__card"
+      role="listitem"
+      href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta', con_plano='1') }}"
+    >
+      <span class="terreno-hub__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </span>
+      <h3>Masterplan interactivo</h3>
+      <p>Lotes con plano SVG, etapas y mapa para elegir tu parcela con un clic.</p>
+    </a>
+
+    <a
+      class="terreno-hub__card terreno-hub__card--recent"
+      id="terrenoHubRecent"
+      role="listitem"
+      href="{{ url_for('main.propiedades', tipo='terreno', operacion='venta') }}"
+      hidden
+    >
+      <div class="terreno-hub__recent-head">
+        <span class="terreno-hub__recent-label">No lo dejes ir</span>
+        <span class="terreno-hub__recent-badge">Visto reciente</span>
+      </div>
+      <div class="terreno-hub__recent-body">
+        <img class="terreno-hub__recent-img" id="terrenoHubRecentImg" src="" alt="" width="72" height="72" hidden />
+        <div class="terreno-hub__recent-info">
+          <strong class="terreno-hub__recent-price" id="terrenoHubRecentPrice"></strong>
+          <span class="terreno-hub__recent-title" id="terrenoHubRecentTitle"></span>
+          <span class="terreno-hub__recent-loc" id="terrenoHubRecentLoc"></span>
+          <span class="terreno-hub__recent-link">Ver terreno &rarr;</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+</section>
+
+
+
+<section class="section section--clean section--info">
+
+  <div class="info-cards">
+
+    <article class="info-card">
+
+      <div class="info-card__icon info-card__icon--doc" aria-hidden="true"></div>
+
+      <div>
+
+        <h3>Publica tu anuncio</h3>
+
+        <p>Publica tu inmueble en venta o alquiler de forma gratuita y llega a miles de personas.</p>
+
+      </div>
+
+    </article>
+
+    <article class="info-card">
+
+      <div class="info-card__icon info-card__icon--rocket" aria-hidden="true"></div>
+
+      <div>
+
+        <h3>Encuentra tu hogar</h3>
+
+        <p>Busca entre miles de propiedades en las mejores zonas del Peru con filtros inteligentes.</p>
+
+      </div>
+
+    </article>
+
+    <article class="info-card">
+
+      <div class="info-card__icon info-card__icon--agent" aria-hidden="true"></div>
+
+      <div>
+
+        <h3>Agentes verificados</h3>
+
+        <p>Contacta con profesionales del sector inmobiliario y recibe asesoria personalizada.</p>
+
+      </div>
+
+    </article>
+
+  </div>
+
+</section>
+
+
+
+{% if destacadas %}
+
+<section class="section section--clean section--alt">
+
+  <div class="section__head">
+
+    <h2>Propiedades destacadas</h2>
+
+    <a class="link-more link-more--dark" href="{{ url_for('main.propiedades') }}?orden=destacadas">Ver todas &rarr;</a>
+
+  </div>
+
+  <div class="grid-props">
+
+    {% for p in destacadas %}{{ card_propiedad(p) }}{% endfor %}
+
+  </div>
+
+</section>
+
+{% endif %}
+
+
+
+<section class="section section--clean section--cities">
+
+  <div class="section__head">
+
+    <h2>Zonas mas populares</h2>
+
+    <a class="link-more link-more--dark" href="{{ url_for('main.mapa') }}">Ver mapa &rarr;</a>
+
+  </div>
+
+  <div class="grid-cities">
+
+    {% for c in ciudades[:8] %}
+
+      <a class="city-card" href="{{ url_for('main.propiedades', ciudad_id=c.CiudadId) }}"
+
+         style="--bg: url('{{ c.ImagenUrl or '' }}')">
+
+        <div class="city-card__overlay"></div>
+
+        <div class="city-card__body">
+
+          <h3>{{ c.Nombre }}</h3>
+
+          <p>{{ c.Region }} &middot; {{ c.Total }} propiedades</p>
+
+        </div>
+
+      </a>
+
+    {% endfor %}
+
+  </div>
+
+</section>
+
+
+
+{% if recientes %}
+
+<section class="section section--clean section--alt">
+
+  <div class="section__head">
+
+    <h2>Recien publicadas</h2>
+
+    <a class="link-more link-more--dark" href="{{ url_for('main.propiedades') }}">Explorar todas &rarr;</a>
+
+  </div>
+
+  <div class="grid-props">
+
+    {% for p in recientes %}{{ card_propiedad(p) }}{% endfor %}
+
+  </div>
+
+</section>
+
+{% endif %}
+
+
+
+<section class="section section--clean">
+
+  <div class="cta-banner cta-banner--clean">
+
+    <div class="cta-banner__content">
+
+      <h2>Publica tu inmueble <span class="hl-clean">sin limites</span></h2>
+
+      <p>Anuncia casas, departamentos, lotes y mas. Llega a miles de compradores y arrendatarios en todo el Peru.</p>
+
+      <a class="btn btn--primary btn--lg" href="{{ url_for('propiedades.publicar') }}">Publicar ahora</a>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}?v=3"></script>
+{% endblock %}
+

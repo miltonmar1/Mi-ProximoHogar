@@ -1,0 +1,12 @@
+# Proteger archivos sensibles (Apache en Hostinger)
+<Files ".env">
+    Require all denied
+</Files>
+<FilesMatch "\.(py|pyc|sql|md|example)$">
+    Require all denied
+</FilesMatch>
+
+# Passenger / Python (Hostinger ajusta rutas desde el panel)
+PassengerEnabled on
+PassengerAppRoot /home/USUARIO/domains/TUDOMINIO.pe/public_html
+PassengerStartupFile passenger_wsgi.py

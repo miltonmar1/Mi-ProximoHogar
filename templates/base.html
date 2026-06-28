@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {% block meta_description %}
+  <meta name="description" content="Mi Proximo Hogar - Portal inmobiliario futurista. Encuentra casas, departamentos, terrenos y locales en venta y alquiler." />
+  {% endblock %}
+  <title>{% block title %}{{ marca }} - Tu hogar del futuro{% endblock %}</title>
+
+  {% block og %}
+  <meta property="og:site_name" content="{{ marca }}" />
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+  <meta property="og:title" content="{% block og_title %}{{ marca }} - Tu hogar del futuro{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}Portal inmobiliario moderno. Encuentra tu hogar ideal en venta y alquiler en Peru.{% endblock %}" />
+  <meta property="og:url" content="{{ absolute_url(request.path) }}" />
+  <meta property="og:locale" content="es_PE" />
+  {% block og_image %}{% endblock %}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{% block twitter_title %}{{ marca }}{% endblock %}" />
+  <meta name="twitter:description" content="{% block twitter_description %}Encuentra propiedades en venta y alquiler.{% endblock %}" />
+  {% endblock %}
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=fx40" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="theme-light{% block body_class %}{% endblock %}" {% block body_data %}{% endblock %}>
+
+  <!-- Fondo 3D animado -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+  <header class="nav">
+    <div class="nav__inner">
+      <a class="logo" href="{{ url_for('main.index') }}">
+        <span class="logo__mark">
+          <svg viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
+            <defs>
+              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffb347" />
+                <stop offset="100%" stop-color="#ff4d00" />
+              </linearGradient>
+            </defs>
+            <path d="M20 4 L36 18 L32 18 L32 34 L24 34 L24 24 L16 24 L16 34 L8 34 L8 18 L4 18 Z" fill="url(#lg)"/>
+          </svg>
+        </span>
+        <span class="logo__text">Mi Proximo<strong>Hogar</strong></span>
+      </a>
+
+      <nav class="nav__links" aria-label="Principal">
+        <a href="{{ url_for('main.propiedades', operacion='venta') }}">Comprar</a>
+        <a href="{{ url_for('main.propiedades', operacion='alquiler') }}">Alquilar</a>
+        <a href="{{ url_for('main.mapa') }}">Mapa</a>
+        <a href="{{ url_for('main.ciudades') }}">Ciudades</a>
+        <a href="{{ url_for('main.agentes') }}">Agentes</a>
+      </nav>
+
+      <div class="nav__cta">
+        {% if current_user.is_authenticated %}
+          <a class="btn btn--ghost" href="{{ url_for('auth.perfil') }}">{{ current_user.nombre.split(' ')[0] }}</a>
+          <a class="btn btn--primary" href="{{ url_for('propiedades.publicar') }}">Publicar anuncio</a>
+          <a class="btn btn--ghost btn--small" href="{{ url_for('auth.logout') }}">Salir</a>
+        {% else %}
+          <a class="btn btn--ghost" href="{{ url_for('auth.login') }}">Ingresar</a>
+          <a class="btn btn--primary" href="{{ url_for('propiedades.publicar') }}">Publicar gratis</a>
+        {% endif %}
+      </div>
+
+      <button class="nav__toggle" aria-label="Abrir menu" id="navToggle">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack" id="flashes">
+        {% for category, msg in messages %}
+          <div class="flash flash--{{ category }}">
+            <span>{{ msg }}</span>
+            <button type="button" class="flash__close" aria-label="Cerrar">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <h3>{{ marca }}</h3>
+        <p>Portal inmobiliario moderno. Encuentra tu hogar ideal en venta y alquiler.</p>
+      </div>
+      <div class="footer__col">
+        <h4>Explorar</h4>
+        <a href="{{ url_for('main.propiedades', operacion='venta') }}">Propiedades en venta</a>
+        <a href="{{ url_for('main.propiedades', operacion='alquiler') }}">Propiedades en alquiler</a>
+        <a href="{{ url_for('main.mapa') }}">Mapa de propiedades</a>
+        <a href="{{ url_for('main.ciudades') }}">Ciudades populares</a>
+        <a href="{{ url_for('main.agentes') }}">Directorio de agentes</a>
+      </div>
+      <div class="footer__col">
+        <h4>Tipos</h4>
+        <a href="{{ url_for('main.propiedades', tipo='casa') }}">Casas</a>
+        <a href="{{ url_for('main.propiedades', tipo='departamento') }}">Departamentos</a>
+        <a href="{{ url_for('main.propiedades', tipo='terreno') }}">Terrenos</a>
+        <a href="{{ url_for('main.propiedades', tipo='local') }}">Locales</a>
+        <a href="{{ url_for('main.propiedades', tipo='oficina') }}">Oficinas</a>
+      </div>
+      <div class="footer__col">
+        <h4>Cuenta</h4>
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('auth.perfil') }}">Mi perfil</a>
+          <a href="{{ url_for('main.favoritos') }}">Mis favoritos</a>
+          <a href="{{ url_for('propiedades.publicar') }}">Publicar anuncio</a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Ingresar</a>
+          <a href="{{ url_for('auth.registro') }}">Crear cuenta</a>
+          <a href="{{ url_for('propiedades.publicar') }}">Publicar gratis</a>
+        {% endif %}
+      </div>
+      <div class="footer__col">
+        <h4>Legal</h4>
+        <a href="{{ url_for('main.legal_privacidad') }}">Privacidad</a>
+        <a href="{{ url_for('main.legal_terminos') }}">Terminos</a>
+        <a href="{{ url_for('main.legal_cookies') }}">Cookies</a>
+        <a href="{{ url_for('main.legal_aviso') }}">Aviso legal</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>&copy; {{ year }} {{ marca }} - Todos los derechos reservados.</span>
+      <span class="footer__chip">Mi Proximo Hogar</span>
+    </div>
+  </footer>
+
+  <div id="continueBanner" class="continue-banner" hidden role="complementary" aria-label="Seguir viendo">
+    <a id="continueBannerLink" class="continue-banner__link" href="#">
+      <img id="continueBannerImg" class="continue-banner__img" src="" alt="" hidden />
+      <span class="continue-banner__text">
+        <small>Seguir viendo</small>
+        <strong id="continueBannerTitle"></strong>
+      </span>
+    </a>
+    <button type="button" class="continue-banner__close" id="continueBannerClose" aria-label="Cerrar">&times;</button>
+  </div>
+
+  <div id="cookieBanner" class="cookie-banner" hidden role="dialog" aria-label="Aviso de cookies">
+    <div class="cookie-banner__inner">
+      <p>Usamos cookies esenciales para el funcionamiento del sitio y, si aceptas, cookies para recordar preferencias.
+        <a href="{{ url_for('main.legal_cookies') }}">Politica de cookies</a></p>
+      <div class="cookie-banner__actions">
+        <button type="button" class="btn btn--ghost btn--small" id="cookieReject">Solo necesarias</button>
+        <button type="button" class="btn btn--primary btn--small" id="cookieAccept">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="{{ url_for('static', filename='js/three-bg.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/hero-3d.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts_extra %}{% endblock %}
+</body>
+</html>

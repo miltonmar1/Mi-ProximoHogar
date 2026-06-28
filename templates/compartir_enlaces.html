@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Mis enlaces compartidos - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Mis enlaces compartidos</h1>
+    <p>Enlaces activos que muestran solo tus anuncios seleccionados en el mapa.</p>
+  </header>
+
+  <div class="mis-anuncios__toolbar">
+    <a class="btn btn--primary" href="{{ url_for('propiedades.compartir') }}">+ Nuevo enlace</a>
+    <a class="btn btn--ghost" href="{{ url_for('propiedades.mis_anuncios') }}">Mis anuncios</a>
+  </div>
+
+  {% if listas %}
+    <div class="share-links-list">
+      {% for l in listas %}
+        {% set url = url_for('main.mapa_compartido', token=l.Token, _external=True) %}
+        <article class="share-link card">
+          <h2>{{ l.Titulo }}</h2>
+          <p class="share-link__meta">
+            {{ l.TotalPropiedades }} anuncio(s) · {{ l.Vistas or 0 }} visita(s) al enlace
+            · Creado {{ l.FechaCreacion.strftime('%d/%m/%Y') if l.FechaCreacion else '' }}
+          </p>
+          <div class="share-created__url">
+            <input type="text" readonly value="{{ url }}" class="share-url-input share-url-input--sm" onclick="this.select()" />
+          </div>
+          <div class="share-link__qr">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&amp;data={{ url | urlencode }}" width="120" height="120" alt="Codigo QR del enlace" loading="lazy" />
+            <span class="share-link__qr-hint">Escanea para abrir el mapa en el movil</span>
+          </div>
+          <div class="share-link__actions">
+            <a class="btn btn--primary btn--small" href="{{ url }}" target="_blank" rel="noopener">Abrir mapa</a>
+            <button type="button" class="btn btn--ghost btn--small btn-copy-link" data-url="{{ url }}">Copiar</button>
+            <form method="post" action="{{ url_for('propiedades.revocar_compartir', lista_id=l.ListaId) }}"
+                  onsubmit="return confirm('Revocar este enlace? Quien lo tenga ya no podra ver el mapa.');">
+              <button class="btn btn--danger btn--small" type="submit">Revocar</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Aun no has creado enlaces para compartir tus anuncios en el mapa.</p>
+      <a class="btn btn--primary" href="{{ url_for('propiedades.compartir') }}">Crear primer enlace</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+  document.querySelectorAll('.btn-copy-link').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-url');
+      if (!url) return;
+      navigator.clipboard.writeText(url).then(function () {
+        btn.textContent = 'Copiado';
+        setTimeout(function () { btn.textContent = 'Copiar'; }, 2000);
+      });
+    });
+  });
+</script>
+{% endblock %}

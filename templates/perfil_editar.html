@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_errors %}
+
+{% block title %}Editar perfil - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Editar perfil</h1>
+    <p>Actualiza tu nombre, contacto y presentacion publica.</p>
+  </header>
+
+  <form method="post" class="form card">
+    {{ form.hidden_tag() }}
+    {{ form_errors(form) }}
+
+    <label>Nombre completo {{ form.nombre(class_="") }}</label>
+    <label>Telefono {{ form.telefono(placeholder="Ej. +51 984 123 456") }}</label>
+    <label>Biografia / presentacion {{ form.biografia(rows=4, placeholder="Cuenta brevemente tu experiencia o enfoque...") }}</label>
+    <label>URL de foto {{ form.foto_url(placeholder="https://...") }}</label>
+    {% if current_user.foto_url or form.foto_url.data %}
+      <div class="perfil-preview">
+        <img src="{{ form.foto_url.data or current_user.foto_url }}" alt="Vista previa" class="perfil-preview__img" />
+      </div>
+    {% endif %}
+    <label class="check-block">{{ form.es_agente() }} Soy agente / agencia inmobiliaria</label>
+
+    <div class="form__actions">
+      {{ form.submit(class_="btn btn--primary") }}
+      <a class="btn btn--ghost" href="{{ url_for('auth.perfil') }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

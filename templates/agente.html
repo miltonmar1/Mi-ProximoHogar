@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card_propiedad %}
+
+{% block title %}{{ agente.NombreCompleto }} - Agente - {{ marca }}{% endblock %}
+
+{% block meta_description %}
+<meta name="description" content="{{ (agente.Biografia or ('Agente inmobiliario en ' ~ marca))|trim|truncate(160) }}" />
+{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": {{ agente.NombreCompleto | tojson }},
+  "description": {{ (agente.Biografia or '')|tojson }},
+  "url": {{ absolute_url(request.path) | tojson }}
+  {% if agente.FotoUrl %},"image": {{ agente.FotoUrl | tojson }}{% endif %}
+  {% if agente.Telefono %},"telephone": {{ agente.Telefono | tojson }}{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="section section--narrow agente-page">
+  <nav class="breadcrumb">
+    <a href="{{ url_for('main.index') }}">Inicio</a> /
+    <a href="{{ url_for('main.agentes') }}">Agentes</a> /
+    <span>{{ agente.NombreCompleto }}</span>
+  </nav>
+
+  <header class="agente-hero card">
+    <div class="agente-hero__main">
+      {% if agente.FotoUrl %}
+        <img class="agente-hero__foto" src="{{ agente.FotoUrl }}" alt="{{ agente.NombreCompleto }}" />
+      {% else %}
+        <div class="agente-hero__avatar">{{ agente.NombreCompleto[:1] }}</div>
+      {% endif %}
+      <div>
+        <span class="agente-hero__badge">Agente / Agencia</span>
+        <h1>{{ agente.NombreCompleto }}</h1>
+        <p class="agente-hero__bio">{{ agente.Biografia or 'Profesional inmobiliario en Mi Proximo Hogar.' }}</p>
+        <ul class="agente-hero__stats">
+          <li><strong>{{ agente.TotalPublicas or 0 }}</strong> anuncio{{ 's' if (agente.TotalPublicas or 0) != 1 else '' }} activo{{ 's' if (agente.TotalPublicas or 0) != 1 else '' }}</li>
+          {% if agente.TotalAnuncios and agente.TotalAnuncios != agente.TotalPublicas %}
+          <li><strong>{{ agente.TotalAnuncios }}</strong> en total (incl. pausados)</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    <div class="agente-hero__contact">
+      {% if agente.Telefono %}
+        <a class="btn btn--ghost btn--block" href="tel:{{ agente.Telefono }}">{{ agente.Telefono }}</a>
+        {% set wa_msg = 'Hola ' ~ agente.NombreCompleto ~ ', vi tu perfil en ' ~ marca ~ ' y me gustaria mas informacion.' %}
+        {% set wa_link = agente.Telefono|whatsapp_url(wa_msg) %}
+        {% if wa_link %}
+        <a class="btn btn--whatsapp btn--block" href="{{ wa_link }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        {% endif %}
+      {% endif %}
+      <a class="btn btn--primary btn--block" href="mailto:{{ agente.Email }}?subject={{ ('Consulta - ' ~ agente.NombreCompleto)|urlencode }}">Enviar email</a>
+    </div>
+  </header>
+
+  <div class="section__head" style="margin-top: 2.5rem;">
+    <h2>Anuncios de {{ agente.NombreCompleto.split(' ')[0] }}</h2>
+    {% if anuncios %}
+      <span class="section__count">{{ anuncios|length }} propiedad{{ 'es' if anuncios|length != 1 else '' }}</span>
+    {% endif %}
+  </div>
+
+  {% if anuncios %}
+    <div class="grid-props">
+      {% for p in anuncios %}{{ card_propiedad(p) }}{% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Sin anuncios activos</h3>
+      <p>Este agente no tiene publicaciones visibles en este momento.</p>
+      <a class="btn btn--ghost" href="{{ url_for('main.agentes') }}">Ver otros agentes</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

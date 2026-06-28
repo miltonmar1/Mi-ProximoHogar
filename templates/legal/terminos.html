@@ -1,0 +1,41 @@
+{% extends "legal/_layout.html" %}
+{% set page_title = "Terminos y condiciones" %}
+{% block title %}{{ page_title }} - {{ marca }}{% endblock %}
+
+{% block legal_content %}
+<p>Al usar {{ marca }} aceptas estos terminos. Si no estas de acuerdo, no utilices el servicio.</p>
+
+<h2>1. Titular del servicio</h2>
+<p>
+  El titular de la plataforma es <strong>{{ legal_entity }}</strong>
+  {% if legal_ruc %}(RUC {{ legal_ruc }}){% endif %}, con domicilio en {{ legal_address }}.
+  Contacto: <a href="mailto:{{ legal_email }}">{{ legal_email }}</a>.
+</p>
+
+<h2>2. Objeto del servicio</h2>
+<p>{{ marca }} es un portal que permite a usuarios publicar anuncios inmobiliarios y a terceros buscar propiedades en venta o alquiler. No somos parte de las negociaciones entre anunciantes e interesados ni actuamos como intermediarios inmobiliarios salvo que se indique expresamente.</p>
+
+<h2>3. Registro y cuenta</h2>
+<p>Debes ser mayor de 18 anos, proporcionar informacion veraz y mantener la confidencialidad de tu contrasena. Eres responsable de la actividad realizada desde tu cuenta. Al registrarte (formulario o Google) declaras haber leido y aceptado estos terminos y la <a href="{{ url_for('main.legal_privacidad') }}">politica de privacidad</a>.</p>
+
+<h2>4. Publicacion de anuncios</h2>
+<p>El anunciante garantiza que tiene derecho a publicar el inmueble y que la informacion (precio, ubicacion, fotos, planos) es exacta en la medida de sus conocimientos. Nos reservamos el derecho de moderar, desactivar o eliminar anuncios que incumplan la ley o estos terminos.</p>
+
+<h2>5. Uso permitido</h2>
+<p>Queda prohibido publicar contenido fraudulento, discriminatorio, que infrinja derechos de terceros o que utilice el sitio para spam o extraccion masiva de datos sin autorizacion.</p>
+
+<h2>6. Consultas y contacto</h2>
+<p>Al enviar una consulta autorizas que tus datos sean remitidos al anunciante. {{ marca }} no garantiza respuesta ni veracidad de los anuncios publicados por terceros.</p>
+
+<h2>7. Propiedad intelectual</h2>
+<p>El diseno, marca y software del portal son de {{ legal_entity }}. Las fotos y textos de cada anuncio pertenecen a sus respectivos titulares, que nos otorgan licencia para mostrarlos en la plataforma.</p>
+
+<h2>8. Limitacion de responsabilidad</h2>
+<p>El servicio se ofrece "tal cual". No respondemos por danos derivados de transacciones entre usuarios, errores en anuncios de terceros o interrupciones temporales del servicio, dentro de los limites permitidos por la ley peruana.</p>
+
+<h2>9. Modificaciones</h2>
+<p>Podemos actualizar estos terminos. El uso continuado del sitio tras su publicacion implica aceptacion de los cambios.</p>
+
+<h2>10. Ley aplicable</h2>
+<p>Estos terminos se rigen por las leyes de la Republica del Peru. Cualquier controversia se sometera a los tribunales competentes de Peru.</p>
+{% endblock %}

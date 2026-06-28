@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import form_errors, google_signin_button %}
+
+{% block title %}Ingresar - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth__card">
+    <span class="badge-2050">Acceso seguro</span>
+    <h1>Bienvenido de vuelta</h1>
+    <p>Ingresa a tu cuenta para gestionar publicaciones y favoritos.</p>
+
+    {{ google_signin_button(
+      label='Iniciar sesion con Google',
+      href=url_for('auth.google_login'),
+      enabled=google_oauth_enabled,
+      next_url=request.args.get('next')
+    ) }}
+    <p class="auth__divider"><span>o continuar con</span></p>
+
+    <form method="post" class="form">
+      {{ form.hidden_tag() }}
+      {{ form_errors(form) }}
+      <label>Email {{ form.email(placeholder="tu@email.com") }}</label>
+      <label>Contrasena {{ form.password(placeholder="Tu contrasena") }}</label>
+      <p class="auth__forgot"><a href="{{ url_for('auth.recuperar_password') }}">Olvidaste tu contrasena?</a></p>
+      <label class="check">{{ form.recordar() }} <span>Mantener sesion iniciada</span></label>
+      {{ form.submit(class_="btn btn--primary btn--block") }}
+    </form>
+
+    <div class="auth__alt">
+      <span>No tienes cuenta?</span>
+      <a href="{{ url_for('auth.registro') }}">Crear cuenta gratis</a>
+    </div>
+
+    <div class="auth__demo">
+      <strong>Cuenta demo</strong>
+      <code>demo@miproximohogar.pe</code> /
+      <code>Demo2050!</code>
+    </div>
+  </div>
+</section>
+{% endblock %}

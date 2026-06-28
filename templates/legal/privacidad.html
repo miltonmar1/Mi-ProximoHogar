@@ -1,0 +1,62 @@
+{% extends "legal/_layout.html" %}
+{% set page_title = "Politica de privacidad" %}
+{% block title %}{{ page_title }} - {{ marca }}{% endblock %}
+
+{% block legal_content %}
+<p>En <strong>{{ marca }}</strong> respetamos tu privacidad. Esta politica describe como tratamos los datos personales cuando usas nuestro portal inmobiliario, conforme a la <strong>Ley N.° 29733</strong> (Ley de Proteccion de Datos Personales del Peru) y su reglamento.</p>
+
+<h2>1. Responsable del tratamiento</h2>
+<p>
+  <strong>{{ legal_entity }}</strong>
+  {% if legal_ruc %}<br>RUC: {{ legal_ruc }}{% endif %}
+  <br>Domicilio: {{ legal_address }}
+  <br>Correo de contacto: <a href="mailto:{{ legal_email }}">{{ legal_email }}</a>
+  {% if legal_phone %}<br>Telefono: {{ legal_phone }}{% endif %}
+</p>
+
+<h2>2. Datos que recopilamos</h2>
+<ul>
+  <li><strong>Registro:</strong> nombre, email, telefono y contrasena (almacenada con hash seguro).</li>
+  <li><strong>Inicio con Google:</strong> identificador de Google, nombre, email y foto de perfil publica.</li>
+  <li><strong>Publicacion de anuncios:</strong> datos del inmueble, ubicacion, fotos y planos.</li>
+  <li><strong>Consultas:</strong> nombre, email, telefono y mensaje que envias al anunciante.</li>
+  <li><strong>Navegacion y seguridad:</strong> direccion IP, tipo de navegador, cookies de sesion y registro tecnico de accesos.</li>
+  <li><strong>Estadisticas de lotes (masterplan):</strong> identificador de sesion anonimo en el navegador (localStorage) y eventos de visualizacion de lotes, solo si aceptas cookies no esenciales.</li>
+</ul>
+
+<h2>3. Finalidad del tratamiento</h2>
+<p>Usamos tus datos para crear y gestionar tu cuenta, publicar anuncios, facilitar el contacto entre interesados y anunciantes, medir interes en lotes de terrenos, mejorar el servicio, prevenir fraude y cumplir obligaciones legales.</p>
+
+<h2>4. Base legal</h2>
+<p>El tratamiento se basa en la ejecucion del servicio solicitado, tu consentimiento (registro, cookies no esenciales, registro con Google) y el interes legitimo en mantener la seguridad de la plataforma.</p>
+
+<h2>5. Conservacion</h2>
+<ul>
+  <li><strong>Cuenta activa:</strong> mientras mantengas tu cuenta o sea necesario para el servicio.</li>
+  <li><strong>Consultas:</strong> hasta 24 meses desde el envio, salvo obligacion legal distinta.</li>
+  <li><strong>Logs de seguridad:</strong> hasta 12 meses.</li>
+  <li><strong>Datos de facturacion o reclamos:</strong> segun plazos legales aplicables en Peru.</li>
+</ul>
+
+<h2>6. Encargados y transferencias</h2>
+<p>Podemos usar proveedores que tratan datos por nuestra cuenta, entre ellos:</p>
+<ul>
+  <li><strong>Microsoft Azure</strong> — alojamiento de la aplicacion y base de datos.</li>
+  <li><strong>Google LLC</strong> — mapas (Google Maps) e inicio de sesion (Google OAuth), cuando esten activos.</li>
+  <li><strong>Proveedor de correo</strong> — envio de notificaciones y recuperacion de contrasena.</li>
+</ul>
+<p>Cuando envias una consulta sobre una propiedad, compartimos tus datos de contacto y mensaje con el anunciante correspondiente.</p>
+
+<h2>7. Tus derechos (ARCO)</h2>
+<p>Puedes solicitar <strong>acceso, rectificacion, cancelacion u oposicion</strong> al tratamiento de tus datos, asi como revocar tu consentimiento, escribiendo a <a href="mailto:{{ legal_email }}">{{ legal_email }}</a>. Responderemos en un plazo razonable conforme a la ley peruana.</p>
+<p>Tambien puedes presentar una reclamacion ante la <strong>Autoridad Nacional de Proteccion de Datos Personales</strong> del Ministerio de Justicia y Derechos Humanos del Peru.</p>
+
+<h2>8. Menores de edad</h2>
+<p>El servicio esta dirigido a personas mayores de 18 anos. No recopilamos intencionalmente datos de menores. Si detectamos una cuenta de menor, la eliminaremos.</p>
+
+<h2>9. Seguridad</h2>
+<p>Aplicamos medidas tecnicas y organizativas razonables: conexiones cifradas (HTTPS), contrasenas hasheadas, control de acceso y alojamiento en infraestructura de nube con estandares de seguridad. Ningun sistema es 100% infalible; te recomendamos usar contrasenas robustas.</p>
+
+<h2>10. Cambios</h2>
+<p>Podemos actualizar esta politica. Publicaremos la version vigente en esta pagina con la fecha de revision.</p>
+{% endblock %}

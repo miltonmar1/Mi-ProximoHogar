@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Agentes - {{ marca }}{% endblock %}
+
+{% block content %}
+<section class="section section--narrow">
+  <header class="page-head">
+    <h1>Directorio de agentes</h1>
+    <p>Profesionales verificados listos para ayudarte a vender o comprar tu inmueble.</p>
+  </header>
+
+  {% if agentes %}
+    <div class="grid-agents">
+      {% for a in agentes %}
+        <article class="agent-card">
+          <a class="agent-card__link" href="{{ url_for('main.agente', uid=a.UsuarioId) }}">
+            {% if a.FotoUrl %}
+              <img class="agent-card__foto" src="{{ a.FotoUrl }}" alt="" loading="lazy" />
+            {% else %}
+              <div class="agent-card__avatar">{{ a.NombreCompleto[:1] }}</div>
+            {% endif %}
+            <h3>{{ a.NombreCompleto }}</h3>
+            <p class="agent-card__bio">{{ a.Biografia or 'Agente inmobiliario certificado.' }}</p>
+            <div class="agent-card__stats">
+              <span><strong>{{ a.TotalPropiedades }}</strong> anuncio{{ 's' if a.TotalPropiedades != 1 else '' }} activo{{ 's' if a.TotalPropiedades != 1 else '' }}</span>
+            </div>
+            <span class="agent-card__cta">Ver perfil y anuncios &rarr;</span>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Aun no hay agentes registrados</h3>
+      <p>Crea una cuenta marcando la opcion "Soy agente" para aparecer aqui.</p>
+      <a class="btn btn--primary" href="{{ url_for('auth.registro') }}">Registrarme</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
