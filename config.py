@@ -34,6 +34,7 @@ class Config:
     MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", os.environ.get("DB_NAME", "miproximohogar"))
     MYSQL_USER = os.environ.get("MYSQL_USER", "")
     MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
+    MYSQL_SSL = os.environ.get("MYSQL_SSL", "no").lower() in ("1", "true", "yes")
 
     FLASK_ENV = os.environ.get("FLASK_ENV", "development")
     FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "1").lower() in ("1", "true", "yes")

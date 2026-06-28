@@ -17,7 +17,7 @@ def _connect():
     if is_mysql():
         import pymysql
 
-        return pymysql.connect(
+        kwargs = dict(
             host=cfg.MYSQL_HOST,
             port=int(cfg.MYSQL_PORT),
             user=cfg.MYSQL_USER,
@@ -27,6 +27,9 @@ def _connect():
             cursorclass=pymysql.cursors.Cursor,
             autocommit=False,
         )
+        if getattr(cfg, "MYSQL_SSL", False):
+            kwargs["ssl"] = {"ssl": {}}
+        return pymysql.connect(**kwargs)
     import pyodbc
 
     return pyodbc.connect(current_app.config["DB_CONNECTION_STRING"], autocommit=False)
