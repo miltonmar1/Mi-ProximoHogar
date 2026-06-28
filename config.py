@@ -136,7 +136,8 @@ class Config:
             if not cls.MYSQL_DATABASE:
                 errors.append("MYSQL_DATABASE es obligatorio.")
         if not cls.LEGAL_EMAIL or "@" not in cls.LEGAL_EMAIL:
-            errors.append("LEGAL_EMAIL debe ser un correo de contacto valido.")
+            if cls.is_production():
+                errors.append("LEGAL_EMAIL debe ser un correo de contacto valido.")
         if cls.FLASK_DEBUG and cls.is_production():
             errors.append("FLASK_DEBUG debe ser 0 en produccion.")
         if "127.0.0.1" in cls.SITE_URL and cls.is_production():
