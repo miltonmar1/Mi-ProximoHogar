@@ -41,7 +41,11 @@ class Config:
         "yes" if _IS_AZURE_SQL else "no",
     ).lower() in ("1", "true", "yes")
 
-    # MySQL (Hostinger / Azure Database for MySQL)    MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
+    # Base de datos de la app MilOficios (mismo servidor SQL, otra BD)
+    MILOFICIOS_DB_NAME = os.environ.get("MILOFICIOS_DB_NAME", "MilOficios")
+
+    # MySQL (Hostinger / Azure Database for MySQL)
+    MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
     MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", os.environ.get("DB_NAME", "miproximohogar"))
     MYSQL_USER = os.environ.get("MYSQL_USER", "")
     MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")

@@ -63,11 +63,13 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     from routes.auth import bp as auth_bp
     from routes.propiedades import bp as propiedades_bp
     from routes.api import bp as api_bp
+    from routes.miloficios_api import bp as miloficios_api_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(propiedades_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(miloficios_api_bp)
 
     if config_class.is_production():
         @app.after_request

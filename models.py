@@ -986,6 +986,8 @@ def _fila_a_item_mapa(r: dict[str, Any]) -> dict[str, Any] | None:
         "destacada": bool(r.get("Destacada")),
         "lat": lat,
         "lng": lng,
+        "telefono": r.get("AnuncianteTelefono"),
+        "anunciante": r.get("Anunciante"),
         "poligono": r.get("PoligonoLote"),
         "plan_masterplan": r.get("PlanMasterplan"),
     }
